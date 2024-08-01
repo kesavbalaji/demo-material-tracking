@@ -1,7 +1,6 @@
 package com.example.demo.service;
 
 
-
 import com.example.demo.dto.InventoryStockDto;
 import com.example.demo.entity.CastingYardData;
 import com.example.demo.repository.CastingYardDetailsRepository;
@@ -19,7 +18,9 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class CastingYardServiceImpl {
@@ -44,9 +45,6 @@ public class CastingYardServiceImpl {
         String jdbcURL = "jdbc:postgresql://localhost:5432/postgres?currentSchema=public";
         String username = "postgres";
         String password = "postgres";
-//        String jdbcURL = "jdbc:sqlserver://103.59.132.37/sqlexpress:3511;DatabaseName=segmentTracking;instance=SQLSERVER;encrypt=true;TrustServerCertificate=true;";
-//        String username = "urc123";
-//        String password = "urc123";
         try (InputStream inputStream = file.getInputStream();
              Workbook workbook = new XSSFWorkbook(inputStream);
              Connection connection = DriverManager.getConnection(jdbcURL, username, password)) {
@@ -76,7 +74,7 @@ public class CastingYardServiceImpl {
                 Cell cell14 = row.getCell(13);
 
                 statement.setString(1, cell1.getStringCellValue());
-                statement.setString(2, String.valueOf(cell2.getDateCellValue()));
+                statement.setString(2, cell2.toString());
                 statement.setString(3, cell3.getStringCellValue());
                 statement.setString(4, cell4.getStringCellValue());
                 statement.setString(5, cell5.getStringCellValue());
