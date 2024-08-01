@@ -2,10 +2,12 @@ package com.example.demo.controller;
 
 
 import com.example.demo.dto.InventoryStockDto;
+import com.example.demo.dto.PrintStatusUpdateRequest;
 import com.example.demo.dto.SearchRequest;
 import com.example.demo.entity.CastingYardData;
 import com.example.demo.service.CastingYardServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,8 +28,14 @@ public class MainController {
         if (file.isEmpty())
             throw new RuntimeException("File is empty...");
         castingYardService.writeIntoDB(file);
-        List<CastingYardData> allEntities = castingYardService.getAllEntities();
+        List<CastingYardData> allEntities = castingYardService.getEntitiesByStatusPending();
         return allEntities.stream().sorted(Comparator.comparing(CastingYardData::getId)).collect(Collectors.toList());
+    }
+
+    @PostMapping("/api/entities/updatePrintStatus")
+    public ResponseEntity<String> updateStatusAndCount(@RequestBody PrintStatusUpdateRequest entityService) throws IOException {
+        castingYardService.updatePrintStatus(entityService);
+        return ResponseEntity.ok("Print status updated successfully");
     }
 
     @PostMapping("/api/search")

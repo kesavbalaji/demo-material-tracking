@@ -59,4 +59,10 @@ public class CastingYardData {
 
     @Column(name = "volume")
     private String volume;
+
+    @Column(name = "print_status")
+    private String printStatus;
+
+    @Column(name = "print_count")
+    private String printCount;
 }

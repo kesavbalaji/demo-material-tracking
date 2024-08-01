@@ -21,8 +21,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 //        List<String> roles = Collections.singletonList(user.getRole());
         return
                 org.springframework.security.core.userdetails.User.builder()
-                        .username("kesav")
-                        .password("material")
+                        .username("URC")
+                        .password("URC123")
                         .roles("USER")
                         .build();
     }

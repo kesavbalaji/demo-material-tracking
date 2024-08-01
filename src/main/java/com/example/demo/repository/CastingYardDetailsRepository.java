@@ -20,4 +20,14 @@ public interface CastingYardDetailsRepository extends JpaRepository<CastingYardD
 
     @Query(value = "SELECT DISTINCT family_type as familyType, count(*) as familyCount FROM casting_yard_details group by family_type", nativeQuery = true)
     List<InventoryStockDto> findByFamilyType(String familyType);
+
+
+    @Query(value = "select * from public.casting_yard_details cyd where cyd.print_status='PENDING'", nativeQuery = true)
+    List<CastingYardData> getEntitiesByStatusPending();
+
+    @Query(value = "update public.casting_yard_details cyd set print_status = 'PRINTED', print_count = ?2 where segment_barcode_id = ?1", nativeQuery = true)
+    void updateStatusAndCount(String segmentId, String printCount);
+
+    @Query(value = "select print_count from public.casting_yard_details cyd where segment_barcode_id = ?1", nativeQuery = true)
+    int getPrintCount(String segmentId);
 }

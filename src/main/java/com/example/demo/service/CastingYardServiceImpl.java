@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 
 import com.example.demo.dto.InventoryStockDto;
+import com.example.demo.dto.PrintStatusUpdateRequest;
 import com.example.demo.entity.CastingYardData;
 import com.example.demo.repository.CastingYardDetailsRepository;
 import io.micrometer.common.util.StringUtils;
@@ -32,6 +33,17 @@ public class CastingYardServiceImpl {
         return castingYardDetailsRepository.findAll();
     }
 
+    public List<CastingYardData> getEntitiesByStatusPending() {
+        return castingYardDetailsRepository.getEntitiesByStatusPending();
+    }
+
+    public void updatePrintStatus(PrintStatusUpdateRequest printStatusUpdateRequest) {
+        String segmentBarcodeId = printStatusUpdateRequest.getSegmentBarcodeId();
+        int printCount = castingYardDetailsRepository.getPrintCount(segmentBarcodeId);
+        int updatedCount = printCount + 1;
+        castingYardDetailsRepository.updateStatusAndCount(segmentBarcodeId, String.valueOf(updatedCount));
+    }
+
     public List<CastingYardData> searchRecords(String id, LocalDate fromDate, LocalDate toDate) {
         return castingYardDetailsRepository.findByIdAndDateBetween(id, fromDate, toDate);
     }
@@ -50,7 +62,7 @@ public class CastingYardServiceImpl {
              Connection connection = DriverManager.getConnection(jdbcURL, username, password)) {
             DataFormatter formatter = new DataFormatter(); //creating formatter using the default locale
             Sheet sheet = workbook.getSheetAt(0);
-            String sql = "INSERT INTO public.casting_yard_details(Segment_Barcode_ID, Casting_Date, Location,Reference_Level,Family,Family_Type,Description,Mark,Type,Length,Count,LEFT_CORBEL_DISTANCE,RIGHT_CORBEL_DISTANCE,Volume) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            String sql = "INSERT INTO public.casting_yard_details(Segment_Barcode_ID, Casting_Date, Location,Reference_Level,Family,Family_Type,Description,Mark,Type,Length,Count,LEFT_CORBEL_DISTANCE,RIGHT_CORBEL_DISTANCE,Volume,print_status,print_count) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
             PreparedStatement statement = connection.prepareStatement(sql);
 
             for (Row row : sheet) {
@@ -96,6 +108,8 @@ public class CastingYardServiceImpl {
                     statement.setString(14, String.valueOf(cell14.getNumericCellValue()));
                 else
                     statement.setString(14, "");
+                statement.setString(15, "PENDING");
+                statement.setString(16, "0");
 
 
                 statement.addBatch();
