@@ -38,6 +38,11 @@ public class MainController {
         return ResponseEntity.ok("Print status updated successfully");
     }
 
+    @PostMapping("api/entities/checkPrintCount")
+    public Boolean checkPrintCount(@RequestBody PrintStatusUpdateRequest printStatusUpdateRequest) throws IOException {
+        return castingYardService.checkPrintCount(printStatusUpdateRequest.getSegmentBarcodeId());
+    }
+
     @PostMapping("/api/search")
     public List<CastingYardData> searchRecords(@RequestBody SearchRequest searchRequest) {
         String searchRequestId = searchRequest.getId();

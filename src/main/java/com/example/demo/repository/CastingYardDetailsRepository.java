@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 
 @Repository
@@ -26,8 +27,8 @@ public interface CastingYardDetailsRepository extends JpaRepository<CastingYardD
     List<CastingYardData> getEntitiesByStatusPending();
 
     @Query(value = "update public.casting_yard_details cyd set print_status = 'PRINTED', print_count = ?2 where segment_barcode_id = ?1", nativeQuery = true)
-    void updateStatusAndCount(String segmentId, String printCount);
+    void updateStatusAndCount(String segmentId, Integer printCount);
 
     @Query(value = "select print_count from public.casting_yard_details cyd where segment_barcode_id = ?1", nativeQuery = true)
-    int getPrintCount(String segmentId);
+    Integer getPrintCount(String segmentId);
 }

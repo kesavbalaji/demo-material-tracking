@@ -64,5 +64,5 @@ public class CastingYardData {
     private String printStatus;
 
     @Column(name = "print_count")
-    private String printCount;
+    private Integer printCount;
 }

@@ -167,14 +167,8 @@
         // Highlight the clicked row
         row.addClass('highlight');
 
-        // Generate QR Code and print
-        generateQRCode(data);
-        printQRCode(data);
-
-        // Hide the row after printing
-        setTimeout(function() {
-            row.remove(); // This removes the row from the table
-        }, 500); // Delay to ensure print dialog is opened before hiding the row
+        // Check print count before proceeding to print
+        checkPrintCountAndPrint(data, row);
     });
 
     $('#uploadForm').on('submit', function(event) {
@@ -216,14 +210,41 @@
     });
 });
 
+function checkPrintCountAndPrint(data, row) {
+    $.ajax({
+        url: '/materialTracking/api/entities/checkPrintCount', // Adjust the endpoint as necessary
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            segmentBarcodeId: data.segmentBarcodeId
+        }),
+        success: function(response) {
+            if (response === true) { // Check if response is true
+                generateQRCode(data);
+                printQRCode(data);
+
+                // Hide the row after printing
+                setTimeout(function() {
+                    row.remove(); // This removes the row from the table
+                }, 500); // Delay to ensure print dialog is opened before hiding the row
+            } else {
+                alert('No duplicates allowed');
+            }
+        },
+        error: function(error) {
+            console.log('Failed to check print count');
+        }
+    });
+}
+
 function generateQRCode(data) {
     var qrText = `${data.segmentBarcodeId}`;
     $('#qrCode').empty(); // Clear previous QR code
 
     new QRCode(document.getElementById("qrCode"), {
         text: qrText,
-        width: 340, // 90mm in pixels
-        height: 340, // 90mm in pixels
+        width: 378, // 100mm in pixels (378 pixels for 100mm assuming 96 DPI)
+        height: 378, // 100mm in pixels (378 pixels for 100mm assuming 96 DPI)
         colorDark : "#000000",
         colorLight : "#ffffff",
         correctLevel : QRCode.CorrectLevel.H // Higher error correction level
@@ -267,8 +288,8 @@ function printQRCode(data) {
                     }
                     #qrCode {
                         margin-bottom: 20px; /* Space between QR code and text */
-                        width: 100mm; /* Ensure QR code is 100mm */
-                        height: 100mm; /* Ensure QR code is 100mm */
+                        width: 80mm; /* Ensure QR code is 100mm */
+                        height: 80mm; /* Ensure QR code is 100mm */
                     }
                     #printButton {
                         display: none; /* Hide the button during print */
@@ -323,6 +344,7 @@ function printQRCode(data) {
         }
     });
 }
+
 
 </script>
 </body>
