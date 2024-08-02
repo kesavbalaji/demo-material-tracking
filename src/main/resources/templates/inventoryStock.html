@@ -40,7 +40,7 @@
             const searchId = $('#searchId').val();
 
             $.ajax({
-                url: '/api/inventorySearch/' + searchId,
+                url: '/materialTracking/api/inventorySearch/' + searchId,
                 method: 'GET',
                 success: function(response) {
                     // Clear previous results

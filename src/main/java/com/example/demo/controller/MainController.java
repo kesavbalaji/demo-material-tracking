@@ -1,12 +1,11 @@
 package com.example.demo.controller;
 
 
-import com.example.demo.dto.InventoryStockDto;
-import com.example.demo.dto.PrintStatusUpdateRequest;
-import com.example.demo.dto.SearchRequest;
+import com.example.demo.dto.*;
 import com.example.demo.entity.CastingYardData;
 import com.example.demo.service.CastingYardServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +21,7 @@ public class MainController {
 
     @Autowired
     private CastingYardServiceImpl castingYardService;
+
 
     @PostMapping("/api/entities/upload")
     public List<CastingYardData> handleFileUpload(@RequestParam("file") MultipartFile file) throws IOException {
@@ -51,9 +51,70 @@ public class MainController {
         return castingYardService.searchRecords(searchRequestId, fromDate, toDate);
     }
 
-    @GetMapping("api/inventorySearch")
+    @GetMapping("/api/inventorySearch")
     public List<InventoryStockDto> searchInventoryStock(@RequestParam("searchId") String searchId) {
         List<InventoryStockDto> castingYardData = castingYardService.searchByFamilyType(searchId);
         return castingYardData;
     }
+
+    @GetMapping("/api/getSegmentData/{barcode}")
+    public ResponseEntity<CastingYardData> getSegmentData(@PathVariable String barcode) {
+        try {
+            CastingYardData segmentData = castingYardService.getSegmentIntoBySegmentId(barcode);
+            if (segmentData != null) {
+                return ResponseEntity.ok(segmentData);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/api/getSegmentDataByQaConfirmation/{barcode}")
+    public ResponseEntity<CastingYardData> getSegmentDataByQaConfirmation(@PathVariable String barcode) {
+        try {
+            CastingYardData segmentData = castingYardService.getSegmentDataByQaConfirmation(barcode);
+            if (segmentData != null) {
+                return ResponseEntity.ok(segmentData);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/api/updateStatus")
+    public ResponseEntity<String> updateStatus(@RequestBody StatusUpdateRequest request) {
+        try {
+            castingYardService.updateStatus(request.getSegmentIds(), request.getStatus());
+            return ResponseEntity.ok("Status updated successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred while updating status");
+        }
+    }
+
+    @PostMapping("/api/updateDispatchId")
+    public ResponseEntity<String> updateDispatchId(@RequestBody StatusUpdateRequest request) {
+        try {
+            castingYardService.updateDispatchId(request.getSegmentIds(), request.getDispatchId());
+            return ResponseEntity.ok("Status updated successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred while updating status");
+        }
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<Boolean> registerUser(@RequestBody RegisterDto registerDto) {
+        boolean registerUser = castingYardService.registerUser(registerDto);
+        return ResponseEntity.ok(registerUser);
+    }
+
+    @GetMapping("/api/getNextDispatchId")
+    public ResponseEntity<String> getNextDispatchId() {
+        String nextDispatchId = castingYardService.getNextDispatchId(); // Implement this service method
+        return ResponseEntity.ok(nextDispatchId);
+    }
+
 }

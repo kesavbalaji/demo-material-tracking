@@ -3,12 +3,18 @@ package com.example.demo.service;
 
 import com.example.demo.dto.InventoryStockDto;
 import com.example.demo.dto.PrintStatusUpdateRequest;
+import com.example.demo.dto.RegisterDto;
 import com.example.demo.entity.CastingYardData;
+import com.example.demo.entity.User;
 import com.example.demo.repository.CastingYardDetailsRepository;
+import com.example.demo.repository.UserRepository;
 import io.micrometer.common.util.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,13 +24,18 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CastingYardServiceImpl {
 
     @Autowired
     private CastingYardDetailsRepository castingYardDetailsRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     public List<CastingYardData> getAllEntities() {
         return castingYardDetailsRepository.findAll();
@@ -53,8 +64,53 @@ public class CastingYardServiceImpl {
     }
 
     public List<InventoryStockDto> searchByFamilyType(String familyType) {
-        List<InventoryStockDto> byFamilyType = castingYardDetailsRepository.findByFamilyType(familyType);
-        return byFamilyType;
+        return castingYardDetailsRepository.findByFamilyType(familyType);
+    }
+
+    public CastingYardData getSegmentIntoBySegmentId(String segmentId) {
+        return castingYardDetailsRepository.getDataBySegmentId(segmentId);
+    }
+
+    public CastingYardData getSegmentDataByQaConfirmation(String segmentId) {
+        return castingYardDetailsRepository.getSegmentDataByQaConfirmation(segmentId);
+    }
+
+    public boolean updateStatus(List<String> segmentIds, String status) {
+        String currentUsername = getCurrentUsername();
+        int updatedCount = castingYardDetailsRepository.updateStatusForSegments(segmentIds, status, currentUsername);
+        return updatedCount == segmentIds.size();
+    }
+
+    public boolean updateDispatchId(List<String> segmentIds, String dispatchId) {
+        int updatedCount = castingYardDetailsRepository.updateDispatchIdForSegmentId(segmentIds, dispatchId);
+        return updatedCount == segmentIds.size();
+    }
+
+    private String getCurrentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof UserDetails) {
+                return ((UserDetails) principal).getUsername();
+            } else {
+                return principal.toString();
+            }
+        }
+        return null;
+    }
+
+    public boolean registerUser(RegisterDto registerDto) {
+        Optional<User> user = userRepository.getUser(registerDto.getAdminUsername());
+        if (user.isPresent()) {
+            User user1 = new User();
+            user1.setName(registerDto.getUsername());
+            user1.setRole("USER");
+            user1.setPassword(registerDto.getPassword());
+            userRepository.save(user1);
+            return true;
+        }
+        else
+            return false;
     }
 
     public String writeIntoDB(MultipartFile file) throws IOException {
@@ -89,7 +145,10 @@ public class CastingYardServiceImpl {
                     Cell cell14 = row.getCell(13);
 
                     statement.setString(1, cell1.getStringCellValue());
-                    statement.setString(2, cell2.toString());
+                    if (cell2 != null && cell2.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell2.toString()))
+                        statement.setString(2, cell2.toString());
+                    else
+                        statement.setString(12, "");
                     statement.setString(3, cell3.getStringCellValue());
                     statement.setString(4, cell4.getStringCellValue());
                     statement.setString(5, cell5.getStringCellValue());
@@ -133,5 +192,22 @@ public class CastingYardServiceImpl {
             return "File upload failed: " + e.getMessage();
         }
 
+    }
+
+    public String getNextDispatchId() {
+
+        LocalDate today = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMyy");
+        String datePrefix = today.format(formatter);
+        List<String> ids = castingYardDetailsRepository.findLastDispatchId("DISP" + datePrefix);
+
+        String lastId = ids.isEmpty() ? null : ids.get(0);
+        int nextNumber = 1;
+        if (lastId != null) {
+            String numberPart = lastId.substring(lastId.length() - 3);
+            nextNumber = Integer.parseInt(numberPart) + 1;
+        }
+
+        return String.format("DISP%s-%03d", datePrefix, nextNumber);
     }
 }

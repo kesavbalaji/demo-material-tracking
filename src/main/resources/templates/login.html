@@ -1,69 +1,118 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport"
-          content="width=device-width,
-                   initial-scale=1,
-                   shrink-to-fit=no" />
-    <link rel="stylesheet"
-          href=
-                  "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" />
     <title>Segment Tracking System</title>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
-
 <body>
-<h1 class="text-success text-center">
-    Login Screen - Casting yard
-</h1>
+<h1 class="text-success text-center">Login Screen - Casting Yard</h1>
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="card">
                 <div class="card-body">
-                    <form id="registrationForm" th:action="@{/login}" method="post">
+                    <form id="loginForm" th:action="@{/login}" method="post">
                         <div class="form-group">
-                            <label for="text">
-                                Username
-                            </label>
-                            <input type="text"
-                                   class="form-control"
-                                   id="text"
-                                   name="username"
-                                   placeholder="UserName" required />
+                            <label for="username">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" placeholder="Username" required />
                         </div>
                         <div class="form-group">
-                            <label for="password">
-                                Password
-                            </label>
-                            <input type="password"
-                                   class="form-control"
-                                   id="password"
-                                   name="password"
-                                   placeholder="Password"
-                                   required />
+                            <label for="password">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Password" required />
                         </div>
                         <div class="form-group">
-                            <label for="validationCustom04" class="form-label">Location</label>
-                            <select class="form-select" id="validationCustom04" required>
+                            <label for="location">Location</label>
+                            <select class="form-select" id="location" name="location" required>
                                 <option selected disabled value="">Choose...</option>
-                                <option>Casting</option>
+                                <option value="Casting">Casting</option>
                             </select>
                         </div>
                         <div class="container" style="margin-top:5px">
                             <div class="row">
                                 <div class="col text-center">
-                                    <button class="btn btn-default">Login</button>
+                                    <button type="submit" class="btn btn-default">Login</button>
                                 </div>
                             </div>
                         </div>
                     </form>
+                    <hr />
+                    <div class="text-center">
+                        <a href="#" id="showRegisterForm">Register</a>
+                    </div>
+                    <form id="registrationForm" style="display:none;">
+                        <h3 class="text-center">Register</h3>
+                        <div class="form-group">
+                            <label for="adminUsername">Admin Username</label>
+                            <input type="text" class="form-control" id="adminUsername" name="adminUsername" placeholder="Admin Username" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="regUsername">Username</label>
+                            <input type="text" class="form-control" id="regUsername" name="regUsername" placeholder="Username" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="regPassword">Password</label>
+                            <input type="password" class="form-control" id="regPassword" name="regPassword" placeholder="Password" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="regConfirmPassword">Confirm Password</label>
+                            <input type="password" class="form-control" id="regConfirmPassword" name="regConfirmPassword" placeholder="Confirm Password" required />
+                        </div>
+                        <div class="container" style="margin-top:5px">
+                            <div class="row">
+                                <div class="col text-center">
+                                    <button type="button" id="registerButton" class="btn btn-default">Register</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="registrationResult" class="mt-3 text-center"></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-</body>
+<script>
+    $(document).ready(function() {
+        $('#showRegisterForm').click(function(e) {
+            e.preventDefault();
+            $('#registrationForm').toggle();
+        });
 
+        $('#registerButton').click(function() {
+            var adminUsername = $('#adminUsername').val();
+            var username = $('#regUsername').val();
+            var password = $('#regPassword').val();
+            var confirmPassword = $('#regConfirmPassword').val();
+
+            if (password !== confirmPassword) {
+                $('#registrationResult').html('<div class="alert alert-danger">Passwords do not match!</div>');
+                return;
+            }
+
+            $.ajax({
+                url: '/materialTracking/register',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    adminUsername: adminUsername,
+                    username: username,
+                    password: password
+                }),
+                success: function(response) {
+                    $('#registrationResult').html('<div class="alert alert-success">Registration successful!</div>');
+                },
+                error: function() {
+                    $('#registrationResult').html('<div class="alert alert-danger">Registration failed. Please try again.</div>');
+                }
+            });
+        });
+    });
+</script>
+</body>
 </html>

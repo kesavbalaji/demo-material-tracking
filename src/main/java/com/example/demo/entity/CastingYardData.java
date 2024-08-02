@@ -65,4 +65,7 @@ public class CastingYardData {
 
     @Column(name = "print_count")
     private Integer printCount;
+
+    @Column(name = "dispatch_id")
+    private String dispatchId;
 }

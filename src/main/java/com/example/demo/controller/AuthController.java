@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 @Controller
-@RequestMapping("")
 public class AuthController {
 
     @RequestMapping(value = "/login",method = RequestMethod.GET)
@@ -35,9 +34,9 @@ public class AuthController {
         return "segmentHistory";
     }
 
-    @GetMapping("/inventoryStock")
-    public String inventoryStockForm() {
-        return "inventoryStock";
+    @GetMapping("/segmentConfirmation")
+    public String segmentConfirmation() {
+        return "segmentConfirmation";
     }
 
     @GetMapping("/homePage")

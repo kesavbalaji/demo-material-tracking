@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segment QA Confirmation</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+</head>
+<body>
+<div class="container mt-4">
+    <h2>Segment QA Confirmation</h2>
+    <form id="searchForm">
+        <div class="form-group">
+            <label for="dispatch">Dispatch Id:</label>
+            <input type="text" class="form-control" id="dispatch" readonly>
+        </div>
+        <div class="form-group">
+            <label for="barcode">Scan Barcode:</label>
+            <input type="text" class="form-control" id="barcode">
+        </div>
+        <div class="form-group">
+            <label for="segmentBarcodeId">Segment Barcode ID:</label>
+            <input type="text" class="form-control" id="segmentBarcodeId" readonly>
+        </div>
+        <div class="form-group">
+            <label for="location">Location:</label>
+            <input type="text" class="form-control" id="location" readonly>
+        </div>
+        <div class="form-group">
+            <label for="familyType">Family Type:</label>
+            <input type="text" class="form-control" id="familyType" readonly>
+        </div>
+        <div class="form-group">
+            <label for="family">Family:</label>
+            <input type="text" class="form-control" id="family" readonly>
+        </div>
+        <button type="submit" class="btn btn-primary">Confirm</button>
+        <button type="reset" class="btn btn-secondary">Clear</button>
+    </form>
+
+    <table class="table table-striped table-bordered mt-4" id="resultTable" style="width:100%">
+        <thead>
+        <tr>
+            <th>SI.No</th>
+            <th>Segment Barcode ID</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Results will be inserted here -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Fetch the next dispatch ID on page load
+        function fetchNextDispatchId() {
+            $.ajax({
+                url: '/materialTracking/api/getNextDispatchId',
+                method: 'GET',
+                success: function(dispatchId) {
+                    $('#dispatch').val(dispatchId);
+                },
+                error: function() {
+                    alert('Error retrieving next Dispatch ID.');
+                }
+            });
+        }
+
+        fetchNextDispatchId(); // Initial fetch on page load
+
+        $('#barcode').on('keypress', function(e) {
+            if (e.which == 13) { // Enter key pressed
+                e.preventDefault(); // Prevent default action
+                const barcode = $('#barcode').val();
+                $.ajax({
+                    url: '/materialTracking/api/getSegmentDataByQaConfirmation/' + barcode,
+                    method: 'GET',
+                    success: function(response) {
+                        if (response.printStatus === 'QA CONFIRMED') {
+                            // Populate form fields with backend data
+                            $('#segmentBarcodeId').val(response.segmentBarcodeId);
+                            $('#location').val(response.location);
+                            $('#familyType').val(response.familyType);
+                            $('#family').val(response.family);
+
+                            // Check if the segment ID already exists in the table
+                            const segmentId = response.segmentBarcodeId;
+                            const existingIds = $('#resultTable tbody tr').map(function() {
+                                return $(this).find('td').eq(1).text();
+                            }).get();
+
+                            if (!existingIds.includes(segmentId)) {
+                                // Add data to result table
+                                $('#resultTable tbody').append(
+                                    `<tr>
+                                        <td>${$('#resultTable tbody tr').length + 1}</td>
+                                        <td>${segmentId}</td>
+                                    </tr>`
+                                );
+                            }
+                        } else {
+                            alert('QA Not Confirmed');
+                        }
+                    },
+                    error: function() {
+                        alert('Error retrieving segment data.');
+                    }
+                });
+            }
+        });
+
+        $('#searchForm').on('submit', function(e) {
+            e.preventDefault(); // Prevent form submission
+
+            // Collect segment IDs from the table
+            let segmentIds = [];
+            $('#resultTable tbody tr').each(function() {
+                const segmentBarcodeId = $(this).find('td').eq(1).text();
+                segmentIds.push(segmentBarcodeId);
+            });
+
+            if (segmentIds.length === 0) {
+                alert('No segment IDs found in the table.');
+                return;
+            }
+
+            const dispatchId = $('#dispatch').val();
+
+            // Send update request to backend
+            $.ajax({
+                url: '/materialTracking/api/updateDispatchId',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    dispatchId: dispatchId,
+                    status: 'QA CONFIRMED',
+                    segmentIds: segmentIds
+                }),
+                success: function() {
+                    alert('All segment IDs updated to QA CONFIRMED.');
+                    // Clear the table and form after successful update
+                    $('#resultTable tbody').empty();
+                    $('#searchForm')[0].reset();
+                    fetchNextDispatchId(); // Fetch the updated dispatch ID
+                },
+                error: function() {
+                    alert('All segment IDs updated to QA CONFIRMED.');
+                    $('#resultTable tbody').empty();
+                    $('#searchForm')[0].reset();
+                    fetchNextDispatchId();
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>
