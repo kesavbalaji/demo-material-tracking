@@ -71,6 +71,20 @@ public class MainController {
         }
     }
 
+    @GetMapping("/api/getErectionYardData/{barcode}")
+    public ResponseEntity<CastingYardData> getErectionYardData(@PathVariable String barcode) {
+        try {
+            CastingYardData segmentData = castingYardService.getErectionYardData(barcode);
+            if (segmentData != null) {
+                return ResponseEntity.ok(segmentData);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     @GetMapping("/api/getDispatchIdBySegmentId/{barcode}")
     public ResponseEntity<CastingYardData> getDispatchIdBySegmentId(@PathVariable String barcode) {
         try {
@@ -122,6 +136,12 @@ public class MainController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred while updating status");
         }
+    }
+
+    @PostMapping("/api/updateStatusAsCompleted")
+    public ResponseEntity<String> updateStatusAsCompleted(@RequestBody StatusUpdateRequest request) {
+        castingYardService.updateStatusAsCompleted(request.getSegmentIds(), request.getStatus());
+        return ResponseEntity.ok("Status updated successfully");
     }
 
     @PostMapping("/api/updateDispatchId")

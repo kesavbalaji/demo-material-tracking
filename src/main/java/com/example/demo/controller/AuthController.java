@@ -49,6 +49,11 @@ public class AuthController {
         return "receiveConfirmation";
     }
 
+    @GetMapping("/erectionConfirmation")
+    public String erectionConfirmation() {
+        return "segmentErectionConfirmation";
+    }
+
     @GetMapping("/homePage")
     public String homePage() {
         return "homePage";

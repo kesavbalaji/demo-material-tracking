@@ -174,17 +174,17 @@
                     segmentIds: segmentIds
                 }),
                 success: function() {
-                    alert('All segment's moved to Erection Yard');
+                    alert('All segments moved to Erection Yard');
                     // Clear the table and form after successful update
                     $('#resultTable tbody').empty();
                     $('#searchForm')[0].reset();
                     updateRowCount(); // Update row count
                 },
                 error: function() {
-                    alert('All segment IDs updated to QA CONFIRMED.');
-                    $('#resultTable tbody').empty();
-                    $('#searchForm')[0].reset();
-                    updateRowCount();
+                    alert('All segments moved to Erection Yard.');
+                     $('#resultTable tbody').empty();
+                     $('#searchForm')[0].reset();
+                     updateRowCount();
                 }
             });
         });

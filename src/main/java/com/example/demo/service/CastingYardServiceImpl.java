@@ -71,6 +71,10 @@ public class CastingYardServiceImpl {
         return castingYardDetailsRepository.getDataBySegmentId(segmentId);
     }
 
+    public CastingYardData getErectionYardData(String segmentId) {
+        return castingYardDetailsRepository.getErectionYardData(segmentId);
+    }
+
     public CastingYardData getDispatchIdBySegmentId(String segmentId) {
         return castingYardDetailsRepository.getDispatchIdBySegmentId(segmentId);
     }
@@ -86,6 +90,12 @@ public class CastingYardServiceImpl {
     public boolean updateStatus(List<String> segmentIds, String status) {
         String currentUsername = getCurrentUsername();
         int updatedCount = castingYardDetailsRepository.updateStatusForSegments(segmentIds, status, currentUsername);
+        return updatedCount == segmentIds.size();
+    }
+
+    public boolean updateStatusAsCompleted(List<String> segmentIds, String status) {
+        String currentUsername = getCurrentUsername();
+        int updatedCount = castingYardDetailsRepository.updateStatusAsCompleted(segmentIds, status, currentUsername);
         return updatedCount == segmentIds.size();
     }
 

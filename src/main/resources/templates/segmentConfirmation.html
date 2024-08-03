@@ -70,7 +70,7 @@
                     url: '/materialTracking/api/getSegmentData/' + barcode,
                     method: 'GET',
                     success: function(response) {
-                        if (response.print_status === 'QA CONFIRMED') {
+                        if (response.printStatus === 'QA CONFIRMED') {
                             alert('This segment is already QA CONFIRMED.');
                             return; // Stop further processing
                         }
