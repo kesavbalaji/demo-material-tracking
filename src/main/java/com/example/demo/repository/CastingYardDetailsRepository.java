@@ -39,14 +39,20 @@ public interface CastingYardDetailsRepository extends JpaRepository<CastingYardD
     @Query(value = "select * from public.casting_yard_details cyd where segment_barcode_id = ?1", nativeQuery = true)
     CastingYardData getSegmentDataByQaConfirmation(String segmentId);
 
+    @Query(value = "select * from public.casting_yard_details cyd where segment_barcode_id = ?1", nativeQuery = true)
+    CastingYardData getDispatchIdBySegmentId(String segmentId);
+
+    @Query(value = "select * from public.casting_yard_details cyd where dispatch_id = ?1", nativeQuery = true)
+    List<CastingYardData> getReceiveConfirmationByDispatchId(String dispatchId);
+
     @Query(value = "update public.casting_yard_details set print_status = ?2, updated_by = ?3, created_date = now() where segment_barcode_id in (?1)", nativeQuery = true)
     int updateStatusForSegments(List<String> segmentIds, String status, String userName);
 
     @Query(value = "update public.casting_yard_details set dispatch_id = ?2 where segment_barcode_id in (?1)", nativeQuery = true)
     int updateDispatchIdForSegmentId(List<String> segmentIds,  String dispatchId);
 
-//    @Query(value = "select dispatch_id from public.casting_yard_details")
-//    String findLastDispatchId(String datePrefix);
+    @Query(value = "update public.casting_yard_details set location_status = 'ERECTION YARD', updated_by = ?2, created_date = now() where dispatch_id = ?1 ", nativeQuery = true)
+    int updateReceiveConfirmation(String dispatchId, String userName);;
 
     @Query("SELECT d.dispatchId FROM CastingYardData d WHERE d.dispatchId LIKE :prefix% ORDER BY d.dispatchId DESC")
     List<String> findLastDispatchId(@Param("prefix") String prefix);

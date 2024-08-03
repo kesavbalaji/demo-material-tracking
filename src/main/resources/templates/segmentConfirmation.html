@@ -12,10 +12,6 @@
     <h2>Segment QA Confirmation</h2>
     <form id="searchForm">
         <div class="form-group">
-            <label for="dispatch">Dispatch Id:</label>
-            <input type="text" class="form-control" id="dispatch" readonly>
-        </div>
-        <div class="form-group">
             <label for="barcode">Scan Barcode:</label>
             <input type="text" class="form-control" id="barcode">
         </div>
@@ -34,6 +30,18 @@
         <div class="form-group">
             <label for="family">Family:</label>
             <input type="text" class="form-control" id="family" readonly>
+        </div>
+        <div class="form-group">
+            <label for="referenceLevel">Reference Level:</label>
+            <input type="text" class="form-control" id="referenceLevel" readonly>
+        </div>
+        <div class="form-group">
+            <label for="volume">Volume:</label>
+            <input type="number" class="form-control" id="volume" readonly>
+        </div>
+        <div class="form-group">
+            <label for="castingDate">Casting Date:</label>
+            <input type="date" class="form-control" id="castingDate">
         </div>
         <button type="submit" class="btn btn-primary">Confirm</button>
         <button type="reset" class="btn btn-secondary">Clear</button>
@@ -54,58 +62,54 @@
 
 <script>
     $(document).ready(function() {
-        // Fetch the next dispatch ID on page load
-        function fetchNextDispatchId() {
-            $.ajax({
-                url: '/materialTracking/api/getNextDispatchId',
-                method: 'GET',
-                success: function(dispatchId) {
-                    $('#dispatch').val(dispatchId);
-                },
-                error: function() {
-                    alert('Error retrieving next Dispatch ID.');
-                }
-            });
-        }
-
-        fetchNextDispatchId(); // Initial fetch on page load
-
         $('#barcode').on('keypress', function(e) {
             if (e.which == 13) { // Enter key pressed
                 e.preventDefault(); // Prevent default action
                 const barcode = $('#barcode').val();
                 $.ajax({
-                    url: '/materialTracking/api/getSegmentDataByQaConfirmation/' + barcode,
+                    url: '/materialTracking/api/getSegmentData/' + barcode,
                     method: 'GET',
                     success: function(response) {
-                        if (response.printStatus === 'QA CONFIRMED') {
-                            // Populate form fields with backend data
-                            $('#segmentBarcodeId').val(response.segmentBarcodeId);
-                            $('#location').val(response.location);
-                            $('#familyType').val(response.familyType);
-                            $('#family').val(response.family);
+                        if (response.print_status === 'QA CONFIRMED') {
+                            alert('This segment is already QA CONFIRMED.');
+                            return; // Stop further processing
+                        }
 
-                            // Check if the segment ID already exists in the table
-                            const segmentId = response.segmentBarcodeId;
-                            const existingIds = $('#resultTable tbody tr').map(function() {
-                                return $(this).find('td').eq(1).text();
-                            }).get();
+                        // Populate form fields with backend data
+                        $('#segmentBarcodeId').val(response.segmentBarcodeId);
+                        $('#location').val(response.location);
+                        $('#familyType').val(response.familyType);
+                        $('#family').val(response.family);
+                        $('#referenceLevel').val(response.referenceLevel);
+                        $('#volume').val(response.volume);
 
-                            if (!existingIds.includes(segmentId)) {
-                                // Add data to result table
-                                $('#resultTable tbody').append(
-                                    `<tr>
-                                        <td>${$('#resultTable tbody tr').length + 1}</td>
-                                        <td>${segmentId}</td>
-                                    </tr>`
-                                );
-                            }
+                        // Convert castingDate to date format if provided
+                        if (response.castingDate) {
+                            const date = new Date(response.castingDate);
+                            const formattedDate = date.toISOString().split('T')[0]; // Convert to YYYY-MM-DD format
+                            $('#castingDate').val(formattedDate);
                         } else {
-                            alert('QA Not Confirmed');
+                            $('#castingDate').val(''); // Ensure it is empty if not provided
+                        }
+
+                        // Check if the segment ID already exists in the table
+                        const segmentId = response.segmentBarcodeId;
+                        const existingIds = $('#resultTable tbody tr').map(function() {
+                            return $(this).find('td').eq(1).text();
+                        }).get();
+
+                        if (!existingIds.includes(segmentId)) {
+                            // Add data to result table
+                            $('#resultTable tbody').append(
+                                `<tr>
+                                    <td>${response.id}</td>
+                                    <td>${segmentId}</td>
+                                </tr>`
+                            );
                         }
                     },
                     error: function() {
-                        alert('Error retrieving segment data.');
+                        alert('This segment is already QA CONFIRMED.');
                     }
                 });
             }
@@ -126,30 +130,28 @@
                 return;
             }
 
-            const dispatchId = $('#dispatch').val();
+            // Collect form data including manually entered casting date
+            const castingDate = $('#castingDate').val() || null; // Set to null if no date is entered
 
-            // Send update request to backend
             $.ajax({
-                url: '/materialTracking/api/updateDispatchId',
+                url: '/materialTracking/api/updateStatus',
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({
-                    dispatchId: dispatchId,
                     status: 'QA CONFIRMED',
-                    segmentIds: segmentIds
+                    segmentIds: segmentIds,
+                    castingDate: castingDate
                 }),
                 success: function() {
                     alert('All segment IDs updated to QA CONFIRMED.');
-                    // Clear the table and form after successful update
+                    // Optionally, you can clear the table and form here
                     $('#resultTable tbody').empty();
                     $('#searchForm')[0].reset();
-                    fetchNextDispatchId(); // Fetch the updated dispatch ID
                 },
                 error: function() {
                     alert('All segment IDs updated to QA CONFIRMED.');
                     $('#resultTable tbody').empty();
                     $('#searchForm')[0].reset();
-                    fetchNextDispatchId();
                 }
             });
         });

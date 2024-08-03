@@ -71,8 +71,16 @@ public class CastingYardServiceImpl {
         return castingYardDetailsRepository.getDataBySegmentId(segmentId);
     }
 
+    public CastingYardData getDispatchIdBySegmentId(String segmentId) {
+        return castingYardDetailsRepository.getDispatchIdBySegmentId(segmentId);
+    }
+
     public CastingYardData getSegmentDataByQaConfirmation(String segmentId) {
         return castingYardDetailsRepository.getSegmentDataByQaConfirmation(segmentId);
+    }
+
+    public List<CastingYardData> getReceiveConfirmationByDispatchId(String dispatchId) {
+        return castingYardDetailsRepository.getReceiveConfirmationByDispatchId(dispatchId);
     }
 
     public boolean updateStatus(List<String> segmentIds, String status) {
@@ -83,6 +91,12 @@ public class CastingYardServiceImpl {
 
     public boolean updateDispatchId(List<String> segmentIds, String dispatchId) {
         int updatedCount = castingYardDetailsRepository.updateDispatchIdForSegmentId(segmentIds, dispatchId);
+        return updatedCount == segmentIds.size();
+    }
+
+    public boolean receiveConfirmation(List<String> segmentIds, String dispatchId) {
+        String currentUsername = getCurrentUsername();
+        int updatedCount = castingYardDetailsRepository.updateReceiveConfirmation(dispatchId, currentUsername);
         return updatedCount == segmentIds.size();
     }
 
@@ -121,7 +135,7 @@ public class CastingYardServiceImpl {
              Connection connection = DriverManager.getConnection(jdbcURL, username, password)) {
 
             Sheet sheet = workbook.getSheetAt(0);
-            String sql = "INSERT INTO public.casting_yard_details(Segment_Barcode_ID, Casting_Date, Location,Reference_Level,Family,Family_Type,Description,Mark,Type,Length,Count,LEFT_CORBEL_DISTANCE,RIGHT_CORBEL_DISTANCE,Volume,print_status,print_count) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            String sql = "INSERT INTO public.casting_yard_details(Segment_Barcode_ID, Casting_Date, Location,Reference_Level,Family,Family_Type,Description,Mark,Type,Length,Count,LEFT_CORBEL_DISTANCE,RIGHT_CORBEL_DISTANCE,Volume,print_status,print_count, location_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
             for (Row row : sheet) {
                 if (row.getRowNum() == 0) {
@@ -148,16 +162,19 @@ public class CastingYardServiceImpl {
                     if (cell2 != null && cell2.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell2.toString()))
                         statement.setString(2, cell2.toString());
                     else
-                        statement.setString(12, "");
+                        statement.setString(2, "");
                     statement.setString(3, cell3.getStringCellValue());
                     statement.setString(4, cell4.getStringCellValue());
                     statement.setString(5, cell5.getStringCellValue());
                     statement.setString(6, cell6.getStringCellValue());
-                    statement.setString(7, cell7.getStringCellValue());
+                    if (cell7 != null && cell7.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell7.toString()))
+                        statement.setString(7, cell7.getStringCellValue());
+                    else
+                        statement.setString(7, "");
                     statement.setString(8, cell8.getStringCellValue());
                     statement.setString(9, cell9.getStringCellValue());
-                    statement.setString(10, String.valueOf(cell10.getNumericCellValue()));
-                    statement.setString(11, String.valueOf(cell11.getNumericCellValue()));
+                    statement.setString(10, String.valueOf(cell10));
+                    statement.setString(11, String.valueOf(cell11));
                     if (cell12 != null && cell12.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell12.toString()))
                         statement.setString(12, String.valueOf(cell12.getNumericCellValue()));
                     else
@@ -172,6 +189,7 @@ public class CastingYardServiceImpl {
                         statement.setString(14, "");
                     statement.setString(15, "PENDING");
                     statement.setInt(16, 0);
+                    statement.setString(17, "CASTING YARD");
 
                     statement.executeUpdate();
                 } catch (SQLException e) {

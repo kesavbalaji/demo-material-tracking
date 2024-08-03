@@ -71,10 +71,39 @@ public class MainController {
         }
     }
 
+    @GetMapping("/api/getDispatchIdBySegmentId/{barcode}")
+    public ResponseEntity<CastingYardData> getDispatchIdBySegmentId(@PathVariable String barcode) {
+        try {
+
+            CastingYardData dispatchIdBySegmentId = castingYardService.getDispatchIdBySegmentId(barcode);
+            if (dispatchIdBySegmentId != null) {
+                return ResponseEntity.ok(dispatchIdBySegmentId);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     @GetMapping("/api/getSegmentDataByQaConfirmation/{barcode}")
     public ResponseEntity<CastingYardData> getSegmentDataByQaConfirmation(@PathVariable String barcode) {
         try {
             CastingYardData segmentData = castingYardService.getSegmentDataByQaConfirmation(barcode);
+            if (segmentData != null) {
+                return ResponseEntity.ok(segmentData);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/api/getReceiveConfirmationByDispatchId/{dispatchId}")
+    public ResponseEntity<List<CastingYardData>> getReceiveConfirmationByDispatchId(@PathVariable String dispatchId) {
+        try {
+            List<CastingYardData> segmentData = castingYardService.getReceiveConfirmationByDispatchId(dispatchId);
             if (segmentData != null) {
                 return ResponseEntity.ok(segmentData);
             } else {
@@ -99,6 +128,16 @@ public class MainController {
     public ResponseEntity<String> updateDispatchId(@RequestBody StatusUpdateRequest request) {
         try {
             castingYardService.updateDispatchId(request.getSegmentIds(), request.getDispatchId());
+            return ResponseEntity.ok("Status updated successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred while updating status");
+        }
+    }
+
+    @PostMapping("/api/receiveConfirmation")
+    public ResponseEntity<String> receiveConfirmation(@RequestBody StatusUpdateRequest request) {
+        try {
+            castingYardService.receiveConfirmation(request.getSegmentIds(), request.getDispatchId());
             return ResponseEntity.ok("Status updated successfully");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred while updating status");

@@ -68,4 +68,7 @@ public class CastingYardData {
 
     @Column(name = "dispatch_id")
     private String dispatchId;
+
+    @Column(name = "location_status")
+    private String locationStatus;
 }
