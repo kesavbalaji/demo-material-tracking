@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <title>Segment Tracking System</title>
@@ -81,7 +81,7 @@
 </head>
 <body>
 <div id="loadingIcon">
-    <img src="static/images/loading-icon.png" alt="Loading...">
+    <img th:src="@{/images/loading-icon.jpg}" alt="Loading..." >
 </div>
 <div class="container mt-5">
     <header class="header print-header">

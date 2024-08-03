@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -71,4 +73,7 @@ public class CastingYardData {
 
     @Column(name = "location_status")
     private String locationStatus;
+
+    @Column(name = "created_date")
+    private Date createdDate;
 }

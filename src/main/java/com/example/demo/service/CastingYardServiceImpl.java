@@ -4,6 +4,7 @@ package com.example.demo.service;
 import com.example.demo.dto.InventoryStockDto;
 import com.example.demo.dto.PrintStatusUpdateRequest;
 import com.example.demo.dto.RegisterDto;
+import com.example.demo.dto.SearchReportDto;
 import com.example.demo.entity.CastingYardData;
 import com.example.demo.entity.User;
 import com.example.demo.repository.CastingYardDetailsRepository;
@@ -237,5 +238,9 @@ public class CastingYardServiceImpl {
         }
 
         return String.format("DISP%s-%03d", datePrefix, nextNumber);
+    }
+
+    public List<CastingYardData> findEntities(SearchReportDto searchReportDto) {
+        return castingYardDetailsRepository.findReportByEntities(searchReportDto.getSegmentId());
     }
 }

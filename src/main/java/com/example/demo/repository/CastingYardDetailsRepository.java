@@ -62,4 +62,8 @@ public interface CastingYardDetailsRepository extends JpaRepository<CastingYardD
 
     @Query("SELECT d.dispatchId FROM CastingYardData d WHERE d.dispatchId LIKE :prefix% ORDER BY d.dispatchId DESC")
     List<String> findLastDispatchId(@Param("prefix") String prefix);
+
+
+    @Query(value = "select * from casting_yard_details where segment_barcode_id = ?1", nativeQuery = true)
+    List<CastingYardData> findReportByEntities(String segmentId);
 }

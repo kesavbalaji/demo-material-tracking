@@ -176,4 +176,9 @@ public class MainController {
         return ResponseEntity.ok(nextDispatchId);
     }
 
+    @PostMapping("/api/entities/search")
+    public List<CastingYardData> getSegmentData(@RequestBody SearchReportDto searchReportDto) {
+        return castingYardService.findEntities(searchReportDto);
+    }
+
 }
