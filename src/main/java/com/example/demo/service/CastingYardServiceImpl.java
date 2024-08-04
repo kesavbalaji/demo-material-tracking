@@ -24,6 +24,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -55,7 +56,11 @@ public class CastingYardServiceImpl {
 
     public Boolean checkPrintCount(String segmentId) {
         Integer printCount = castingYardDetailsRepository.getPrintCount(segmentId);
-        if (printCount == 0)
+        String currentUsername = getCurrentUsername();
+        Optional<User> user = userRepository.getUser(currentUsername);
+        if (user.get().getRole().equals("ADMIN"))
+            return Boolean.TRUE;
+        else if (printCount == 0)
             return Boolean.TRUE;
         return Boolean.FALSE;
     }
@@ -133,8 +138,7 @@ public class CastingYardServiceImpl {
             user1.setPassword(registerDto.getPassword());
             userRepository.save(user1);
             return true;
-        }
-        else
+        } else
             return false;
     }
 
@@ -241,6 +245,13 @@ public class CastingYardServiceImpl {
     }
 
     public List<CastingYardData> findEntities(SearchReportDto searchReportDto) {
-        return castingYardDetailsRepository.findReportByEntities(searchReportDto.getSegmentId());
+        SimpleDateFormat formatter = new SimpleDateFormat("dd-MMM-yyyy");
+        if (searchReportDto.getCastingDateFrom() != null && !searchReportDto.getCastingDateTo().isEmpty())
+            return castingYardDetailsRepository.findReportsByCastingDate(searchReportDto.getCastingDateFrom(), searchReportDto.getCastingDateTo());
+        else if (searchReportDto.getErectionDateFrom() != null && !searchReportDto.getErectionDateFrom().isEmpty())
+            return castingYardDetailsRepository.findReportsByErectedDate(searchReportDto.getErectionDateFrom(), searchReportDto.getErectionDateTo());
+        else if (searchReportDto.getSegmentId() !=null && !searchReportDto.getSegmentId().isEmpty())
+            return castingYardDetailsRepository.findReportByEntities(searchReportDto.getSegmentId());
+        return null;
     }
 }
