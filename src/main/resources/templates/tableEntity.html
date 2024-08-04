@@ -92,7 +92,7 @@
     <!-- CSV Upload Form -->
     <form id="uploadForm" class="mb-3">
         <div class="form-group">
-            <label for="csvFile">Upload CSV:</label>
+            <label for="csvFile">Upload:</label>
             <input type="file" id="csvFile" class="form-control-file" accept=".csv">
         </div>
         <button type="submit" class="btn btn-primary">Submit</button>
@@ -170,7 +170,7 @@
         event.preventDefault();
         var fileInput = document.getElementById('csvFile');
         if (fileInput.files.length === 0) {
-            alert("Please select a CSV file to upload.");
+            alert("Please select a file to upload.");
             return;
         }
         var formData = new FormData();
@@ -186,11 +186,11 @@
                 $('#loadingIcon').show();
             },
             success: function(response) {
-                alert('CSV data uploaded successfully');
+                alert('Data uploaded successfully');
                 table.clear().rows.add(response).draw();
             },
             error: function(error) {
-                alert('Failed to upload CSV data');
+                alert('Failed to upload data');
             },
             complete: function() {
                 $('#loadingIcon').hide();

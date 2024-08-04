@@ -131,7 +131,7 @@ public class MainController {
     @PostMapping("/api/updateStatus")
     public ResponseEntity<String> updateStatus(@RequestBody StatusUpdateRequest request) {
         try {
-            castingYardService.updateStatus(request.getSegmentIds(), request.getStatus());
+            castingYardService.updateStatus(request.getSegmentIds(), request.getStatus(), request.getCastingDate());
             return ResponseEntity.ok("Status updated successfully");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred while updating status");

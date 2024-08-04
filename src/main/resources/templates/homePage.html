@@ -159,6 +159,20 @@
                     // Update the browser URL
                     var newUrl = $(this).attr('href');
                     history.pushState(null, '', newUrl);
+
+                    // Collapse the sidebar if the clicked link is one of the specified links
+                    var linkText = $(this).text().trim();
+                    var collapsibleLinks = [
+                        'Segment Confirmation',
+                        'Receive Confirmation',
+                        'Dispatch Confirmation',
+                        'Erection Confirmation'
+                    ];
+                    if (collapsibleLinks.includes(linkText)) {
+                        $('#sidebar').addClass('collapsed');
+                        $('#content').addClass('collapsed');
+                        localStorage.setItem('sidebarCollapsed', 'true');
+                    }
                 }.bind(this), // Bind 'this' to preserve context for newUrl
                 error: function() {
                     alert('An error occurred while loading the content.');
@@ -172,5 +186,8 @@
         };
     });
 </script>
+
+
+
 </body>
 </html>

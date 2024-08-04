@@ -48,8 +48,8 @@ public interface CastingYardDetailsRepository extends JpaRepository<CastingYardD
     @Query(value = "select * from public.casting_yard_details cyd where dispatch_id = ?1", nativeQuery = true)
     List<CastingYardData> getReceiveConfirmationByDispatchId(String dispatchId);
 
-    @Query(value = "update public.casting_yard_details set print_status = ?2, updated_by = ?3, created_date = now() where segment_barcode_id in (?1)", nativeQuery = true)
-    int updateStatusForSegments(List<String> segmentIds, String status, String userName);
+    @Query(value = "update public.casting_yard_details set print_status = ?2, updated_by = ?3, created_date = now(), casting_date = ?4 where segment_barcode_id in (?1)", nativeQuery = true)
+    int updateStatusForSegments(List<String> segmentIds, String status, String userName, String castingDate);
 
     @Query(value = "update public.casting_yard_details set print_status = ?2, updated_by = ?3, created_date = now() where segment_barcode_id in (?1)", nativeQuery = true)
     int updateStatusAsCompleted(List<String> segmentIds, String status, String userName);

@@ -8,10 +8,10 @@
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <style>
         .highlight-green {
-            background-color: lightgreen !important;
+        background-color: lightgreen !important;
         }
         .highlight-red {
-            background-color: lightcoral !important;
+        background-color: lightcoral !important;
         }
     </style>
 </head>
@@ -41,9 +41,8 @@
         </div>
         <button type="submit" class="btn btn-primary">Confirm</button>
         <button type="reset" class="btn btn-secondary">Clear</button>
-        <span id="rowCount" class="ml-3">Count: 0/0</span> <!-- Count label -->
+        <span id="rowCount" class="ml-3" style="font-size: 1.2em; font-weight: bold;">COUNT: 0/0</span>
     </form>
-
     <table class="table table-striped table-bordered mt-4" id="resultTable" style="width:100%">
         <thead>
         <tr>
@@ -56,7 +55,6 @@
         </tbody>
     </table>
 </div>
-
 <script>
     $(document).ready(function() {
         // Function to update the row count
@@ -112,10 +110,12 @@
                                     method: 'GET',
                                     success: function(segments) {
                                         $('#resultTable tbody').empty(); // Clear existing table rows
-                                        segments.forEach((segment, index) => {
+                                        let siNo = 1; // Initialize SI.No starting value
+
+                                        segments.forEach((segment) => {
                                             $('#resultTable tbody').append(
                                                 `<tr>
-                                                    <td>${index + 1}</td>
+                                                    <td>${siNo++}</td> <!-- Increment SI.No for each row -->
                                                     <td>${segment.segmentBarcodeId}</td>
                                                 </tr>`
                                             );
@@ -127,11 +127,13 @@
                                         });
                                         highlightRows(barcode); // Highlight rows based on the scanned barcode
                                         updateRowCount(); // Update row count
+                                        $('#barcode').val(''); // Clear Scan Segment ID field
                                     },
                                     error: function() {
                                         alert('Error retrieving segments for the dispatch ID.');
                                     }
                                 });
+
                             } else {
                                 alert('Dispatch ID not found for the given segment ID.');
                             }
@@ -147,47 +149,50 @@
         });
 
         $('#searchForm').on('submit', function(e) {
-            e.preventDefault(); // Prevent form submission
+    e.preventDefault(); // Prevent form submission
 
-            // Collect segment IDs from the table
-            let segmentIds = [];
-            $('#resultTable tbody tr').each(function() {
-                const segmentBarcodeId = $(this).find('td').eq(1).text();
-                segmentIds.push(segmentBarcodeId);
-            });
+    // Collect segment IDs from the table
+    let segmentIds = [];
+    $('#resultTable tbody tr').each(function() {
+        const segmentBarcodeId = $(this).find('td').eq(1).text();
+        segmentIds.push(segmentBarcodeId);
+    });
 
-            if (segmentIds.length === 0) {
-                alert('No segment IDs found in the table.');
-                return;
-            }
+    if (segmentIds.length === 0) {
+        alert('No segment IDs found in the table.');
+        return;
+    }
 
-            const dispatchId = $('#dispatch').val();
+    const dispatchId = $('#dispatch').val();
 
-            // Send update request to backend
-            $.ajax({
-                url: '/materialTracking/api/receiveConfirmation',
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    dispatchId: dispatchId,
-                    status: 'QA CONFIRMED',
-                    segmentIds: segmentIds
-                }),
-                success: function() {
-                    alert('All segments moved to Erection Yard');
-                    // Clear the table and form after successful update
-                    $('#resultTable tbody').empty();
-                    $('#searchForm')[0].reset();
-                    updateRowCount(); // Update row count
-                },
-                error: function() {
-                    alert('All segments moved to Erection Yard.');
-                     $('#resultTable tbody').empty();
-                     $('#searchForm')[0].reset();
-                     updateRowCount();
-                }
-            });
-        });
+    // Send update request to backend
+    $.ajax({
+        url: '/materialTracking/api/receiveConfirmation',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            dispatchId: dispatchId,
+            status: 'QA CONFIRMED',
+            segmentIds: segmentIds
+        }),
+        success: function() {
+            alert('All segments moved to Erection Yard');
+            // Clear the table and form after successful update
+            $('#resultTable tbody').empty();
+            $('#searchForm')[0].reset();
+            $('#barcode').val(''); // Clear Scan Segment ID field
+            updateRowCount(); // Update row count
+        },
+        error: function() {
+            alert('All segments moved to Erection Yard.');
+            $('#resultTable tbody').empty();
+            $('#searchForm')[0].reset();
+            $('#barcode').val(''); // Clear Scan Segment ID field
+            updateRowCount();
+        }
+    });
+    });
+
 
         // Clear button action
         $('button[type="reset"]').on('click', function() {

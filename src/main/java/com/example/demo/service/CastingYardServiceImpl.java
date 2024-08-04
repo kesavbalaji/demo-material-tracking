@@ -93,9 +93,16 @@ public class CastingYardServiceImpl {
         return castingYardDetailsRepository.getReceiveConfirmationByDispatchId(dispatchId);
     }
 
-    public boolean updateStatus(List<String> segmentIds, String status) {
+    public boolean updateStatus(List<String> segmentIds, String status, String castingDate) {
+        String formattedDateStr = null;
+        if (castingDate != null) {
+            DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("dd-MMM-yyyy");
+            LocalDate date = LocalDate.parse(castingDate, inputFormatter);
+            formattedDateStr = date.format(outputFormatter);
+        }
         String currentUsername = getCurrentUsername();
-        int updatedCount = castingYardDetailsRepository.updateStatusForSegments(segmentIds, status, currentUsername);
+        int updatedCount = castingYardDetailsRepository.updateStatusForSegments(segmentIds, status, currentUsername, formattedDateStr);
         return updatedCount == segmentIds.size();
     }
 
