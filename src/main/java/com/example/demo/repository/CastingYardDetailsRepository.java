@@ -27,8 +27,12 @@ public interface CastingYardDetailsRepository extends JpaRepository<CastingYardD
     @Query(value = "select * from public.casting_yard_details cyd where cyd.print_status='PENDING'", nativeQuery = true)
     List<CastingYardData> getEntitiesByStatusPending();
 
-    @Query(value = "update public.casting_yard_details cyd set print_status = 'PRINTED', print_count = ?2 where segment_barcode_id = ?1", nativeQuery = true)
+    @Modifying
+    @Query("UPDATE CastingYardData SET printStatus = 'PRINTED', printCount = ?2 WHERE segmentBarcodeId = ?1")
     int updateStatusAndCount(String segmentId, Integer printCount);
+
+//    @Query(value = "update public.casting_yard_details cyd set print_status = 'PRINTED', print_count = ?2 where segment_barcode_id = ?1", nativeQuery = true)
+//    int updateStatusAndCount(String segmentId, Integer printCount);
 
     @Query(value = "select print_count from public.casting_yard_details cyd where segment_barcode_id = ?1", nativeQuery = true)
     Integer getPrintCount(String segmentId);
@@ -39,7 +43,7 @@ public interface CastingYardDetailsRepository extends JpaRepository<CastingYardD
     @Query(value = "select * from public.casting_yard_details cyd where segment_barcode_id = ?1 and location_status = 'ERECTION YARD'", nativeQuery = true)
     CastingYardData getErectionYardData(String segmentId);
 
-    @Query(value = "select * from public.casting_yard_details cyd where segment_barcode_id = ?1", nativeQuery = true)
+    @Query(value = "select * from public.casting_yard_details cyd where segment_barcode_id = ?1 and dispatch_id is null and qatest = 'Approved'", nativeQuery = true)
     CastingYardData getSegmentDataByQaConfirmation(String segmentId);
 
     @Query(value = "select * from public.casting_yard_details cyd where segment_barcode_id = ?1", nativeQuery = true)
@@ -48,11 +52,16 @@ public interface CastingYardDetailsRepository extends JpaRepository<CastingYardD
     @Query(value = "select * from public.casting_yard_details cyd where dispatch_id = ?1", nativeQuery = true)
     List<CastingYardData> getReceiveConfirmationByDispatchId(String dispatchId);
 
-    @Query(value = "update public.casting_yard_details set print_status = ?2, updated_by = ?3, created_date = now(), casting_date = ?4 where segment_barcode_id in (?1)", nativeQuery = true)
-    int updateStatusForSegments(List<String> segmentIds, String status, String userName, String castingDate);
+    @Query(value = "update public.casting_yard_details set print_status = ?2, updated_by = ?3, created_date = now(), casting_date = ?4, qatest = ?5 where segment_barcode_id in (?1)", nativeQuery = true)
+    int updateStatusForSegments(List<String> segmentIds, String status, String userName, String castingDate, String qatest);
 
     @Query(value = "update public.casting_yard_details set print_status = ?2, updated_by = ?3, created_date = now() where segment_barcode_id in (?1)", nativeQuery = true)
     int updateStatusAsCompleted(List<String> segmentIds, String status, String userName);
+
+//    @Modifying
+//    @Query("UPDATE CastingYardData SET dispatchId = :dispatchId , segmentBarcodeId IN :segmentIds")
+//    int updateDispatchIdForSegmentId(@Param("segmentIds")  List<String> segmentIds, @Param("dispatchId") String dispatchId);
+
 
     @Query(value = "update public.casting_yard_details set dispatch_id = ?2 where segment_barcode_id in (?1)", nativeQuery = true)
     int updateDispatchIdForSegmentId(List<String> segmentIds,  String dispatchId);
@@ -72,6 +81,13 @@ public interface CastingYardDetailsRepository extends JpaRepository<CastingYardD
 
     @Query(value = "select * from casting_yard_details cyd where cast(created_date as varchar) between ?1 and ?2 and location_status = 'COMPLETED'\n", nativeQuery = true)
     List<CastingYardData> findReportsByErectedDate(String fromDate, String toDate);
+
+    @Modifying
+    @Query("DELETE FROM CastingYardData WHERE id = ?1")
+    int deleteSegment(Integer id);
+
+
+
 
 
 }

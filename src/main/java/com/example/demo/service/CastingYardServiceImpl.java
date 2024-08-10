@@ -46,6 +46,7 @@ public class CastingYardServiceImpl {
         return castingYardDetailsRepository.getEntitiesByStatusPending();
     }
 
+    @Transactional
     public void updatePrintStatus(PrintStatusUpdateRequest printStatusUpdateRequest) {
         String segmentBarcodeId = printStatusUpdateRequest.getSegmentBarcodeId();
         int printCount = castingYardDetailsRepository.getPrintCount(segmentBarcodeId);
@@ -92,7 +93,7 @@ public class CastingYardServiceImpl {
         return castingYardDetailsRepository.getReceiveConfirmationByDispatchId(dispatchId);
     }
 
-    public boolean updateStatus(List<String> segmentIds, String status, String castingDate) {
+    public boolean updateStatus(List<String> segmentIds, String status, String castingDate, String qaTest) {
         String formattedDateStr = null;
         if (castingDate != null) {
             DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -101,7 +102,7 @@ public class CastingYardServiceImpl {
             formattedDateStr = date.format(outputFormatter);
         }
         String currentUsername = getCurrentUsername();
-        int updatedCount = castingYardDetailsRepository.updateStatusForSegments(segmentIds, status, currentUsername, formattedDateStr);
+        int updatedCount = castingYardDetailsRepository.updateStatusForSegments(segmentIds, status, currentUsername, formattedDateStr, qaTest);
         return updatedCount == segmentIds.size();
     }
 
@@ -152,71 +153,37 @@ public class CastingYardServiceImpl {
         String jdbcURL = "jdbc:postgresql://localhost:5432/postgres?currentSchema=public";
         String username = "postgres";
         String password = "postgres";
+
         try (Workbook workbook = new XSSFWorkbook(file.getInputStream());
              Connection connection = DriverManager.getConnection(jdbcURL, username, password)) {
 
             Sheet sheet = workbook.getSheetAt(0);
-            String sql = "INSERT INTO public.casting_yard_details(Segment_Barcode_ID, Casting_Date, Location,Reference_Level,Family,Family_Type,Description,Mark,Type,Length,Count,LEFT_CORBEL_DISTANCE,RIGHT_CORBEL_DISTANCE,Volume,print_status,print_count, location_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            String insertSql = "INSERT INTO public.casting_yard_details(Segment_Barcode_ID, Casting_Date, Location,Reference_Level,Family,Family_Type,Description,Mark,Type,Length,Count,LEFT_CORBEL_DISTANCE,RIGHT_CORBEL_DISTANCE,Volume,print_status,print_count, location_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            String updateSql = "UPDATE public.casting_yard_details SET Segment_Barcode_ID = ?, Casting_Date = ?, Location = ?, Reference_Level = ?, Family = ?, Family_Type = ?, Description = ?, Mark = ?, Type = ?, Length = ?, Count = ?, LEFT_CORBEL_DISTANCE = ?, RIGHT_CORBEL_DISTANCE = ?, Volume = ?, print_status = ?, print_count = ?, location_status = ? WHERE Segment_Barcode_ID = ?";
 
             for (Row row : sheet) {
                 if (row.getRowNum() == 0) {
                     continue; // Skip header row
                 }
 
-                try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                    Cell cell1 = row.getCell(0);
-                    Cell cell2 = row.getCell(1);
-                    Cell cell3 = row.getCell(2);
-                    Cell cell4 = row.getCell(3);
-                    Cell cell5 = row.getCell(4);
-                    Cell cell6 = row.getCell(5);
-                    Cell cell7 = row.getCell(6);
-                    Cell cell8 = row.getCell(7);
-                    Cell cell9 = row.getCell(8);
-                    Cell cell10 = row.getCell(9);
-                    Cell cell11 = row.getCell(10);
-                    Cell cell12 = row.getCell(11);
-                    Cell cell13 = row.getCell(12);
-                    Cell cell14 = row.getCell(13);
+                String segmentBarcodeId = row.getCell(0).getStringCellValue();
+                try (PreparedStatement insertStatement = connection.prepareStatement(insertSql);
+                     PreparedStatement updateStatement = connection.prepareStatement(updateSql)) {
 
-                    statement.setString(1, cell1.getStringCellValue());
-                    if (cell2 != null && cell2.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell2.toString()))
-                        statement.setString(2, cell2.toString());
-                    else
-                        statement.setString(2, "");
-                    statement.setString(3, cell3.getStringCellValue());
-                    statement.setString(4, cell4.getStringCellValue());
-                    statement.setString(5, cell5.getStringCellValue());
-                    statement.setString(6, cell6.getStringCellValue());
-                    if (cell7 != null && cell7.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell7.toString()))
-                        statement.setString(7, cell7.getStringCellValue());
-                    else
-                        statement.setString(7, "");
-                    statement.setString(8, cell8.getStringCellValue());
-                    statement.setString(9, cell9.getStringCellValue());
-                    statement.setString(10, String.valueOf(cell10));
-                    statement.setString(11, String.valueOf(cell11));
-                    if (cell12 != null && cell12.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell12.toString()))
-                        statement.setString(12, String.valueOf(cell12.getNumericCellValue()));
-                    else
-                        statement.setString(12, "");
-                    if (cell13 != null && cell13.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell13.toString()))
-                        statement.setString(13, String.valueOf(cell13.getNumericCellValue()));
-                    else
-                        statement.setString(13, "");
-                    if (cell14 != null && cell14.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell14.toString()))
-                        statement.setString(14, String.valueOf(cell14.getNumericCellValue()));
-                    else
-                        statement.setString(14, "");
-                    statement.setString(15, "PENDING");
-                    statement.setInt(16, 0);
-                    statement.setString(17, "CASTING YARD");
+                    // Fill in the insert statement parameters
+                    fillPreparedStatement(insertStatement, row);
+                    insertStatement.executeUpdate();
 
-                    statement.executeUpdate();
                 } catch (SQLException e) {
                     // Check if the exception is due to a unique key violation
                     if (e.getSQLState().equals("23505")) { // PostgreSQL unique key violation
-                        System.out.println("Duplicate entry found: " + row.getCell(0).getStringCellValue() + " - Skipping this row.");
+                        System.out.println("Duplicate entry found: " + segmentBarcodeId + " - Updating this row instead.");
+                        PreparedStatement updateStatement = connection.prepareStatement(updateSql);
+                        // Fill in the update statement parameters
+                        fillPreparedStatement(updateStatement, row);
+                        updateStatement.setString(17, "CASTING YARD");
+                        updateStatement.setString(18, segmentBarcodeId);// Set the Segment_Barcode_ID for the WHERE clause
+                        updateStatement.executeUpdate();
                     } else {
                         throw e; // If it's a different SQL exception, rethrow it
                     }
@@ -224,14 +191,55 @@ public class CastingYardServiceImpl {
             }
 
             workbook.close();
-            return "File uploaded and data inserted successfully.";
+            return "File uploaded and data inserted/updated successfully.";
 
         } catch (IOException | SQLException e) {
             e.printStackTrace();
             return "File upload failed: " + e.getMessage();
         }
-
     }
+
+    private void fillPreparedStatement(PreparedStatement statement, Row row) throws SQLException {
+        Cell cell1 = row.getCell(0);
+        Cell cell2 = row.getCell(1);
+        Cell cell3 = row.getCell(2);
+        Cell cell4 = row.getCell(3);
+        Cell cell5 = row.getCell(4);
+        Cell cell6 = row.getCell(5);
+        Cell cell7 = row.getCell(6);
+        Cell cell8 = row.getCell(7);
+        Cell cell9 = row.getCell(8);
+        Cell cell10 = row.getCell(9);
+        Cell cell11 = row.getCell(10);
+        Cell cell12 = row.getCell(11);
+        Cell cell13 = row.getCell(12);
+        Cell cell14 = row.getCell(13);
+
+        statement.setString(1, cell1.getStringCellValue());
+        statement.setString(2, cell2 != null && cell2.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell2.toString()) ? cell2.toString() : "");
+        statement.setString(3, cell3.getStringCellValue());
+        statement.setString(4, cell4.getStringCellValue());
+        statement.setString(5, cell5.getStringCellValue());
+        statement.setString(6, cell6.getStringCellValue());
+        statement.setString(7, cell7 != null && cell7.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell7.toString()) ? cell7.getStringCellValue() : "");
+        statement.setString(8, cell8.getStringCellValue());
+        statement.setString(9, cell9.getStringCellValue());
+        statement.setString(10, String.valueOf(cell10));
+        statement.setString(11, String.valueOf(cell11));
+
+        statement.setString(12, cell12 != null && cell12.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell12.toString()) ? String.valueOf(cell12.getNumericCellValue()) : "");
+        statement.setString(13, cell13 != null && cell13.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell13.toString()) ? String.valueOf(cell13.getNumericCellValue()) : "");
+        statement.setString(14, cell14 != null && cell14.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell14.toString()) ? String.valueOf(cell14.getNumericCellValue()) : "");
+
+        statement.setString(15, "PENDING");
+
+        // For print_count, change to setInt instead of setString
+        statement.setInt(16, 0);
+
+        statement.setString(17, "CASTING YARD");
+    }
+
+
 
     public String getNextDispatchId() {
 
@@ -294,5 +302,16 @@ public class CastingYardServiceImpl {
             return userRepository.findAll();
         }
         return new ArrayList<>();
+    }
+
+    @Transactional
+    public void deleteSegmentId(Integer id) {
+        int updateUserModifying = castingYardDetailsRepository.deleteSegment(id);
+    }
+
+    public User getAccessRights() {
+        String currentUsername = getCurrentUsername();
+        Optional<User> user = userRepository.getUser(currentUsername);
+        return user.get();
     }
 }

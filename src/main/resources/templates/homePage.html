@@ -91,22 +91,22 @@
         <li class="nav-item">
             <a class="nav-link ajax-link" href="/materialTracking/entities" data-url="/materialTracking/entities">Barcode Label Generation</a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" id="segmentConfirmationItem">
             <a class="nav-link ajax-link" href="/materialTracking/segmentConfirmation" data-url="/materialTracking/segmentConfirmation">Segment Confirmation</a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" id="dispatchConfirmationItem">
             <a class="nav-link ajax-link" href="/materialTracking/dispatchConfirmation" data-url="/materialTracking/dispatchConfirmation">Dispatch Confirmation</a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" id="receiveConfirmationItem">
             <a class="nav-link ajax-link" href="/materialTracking/receiveConfirmation" data-url="/materialTracking/receiveConfirmation">Receive Confirmation</a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" id="erectionConfirmationItem">
             <a class="nav-link ajax-link" href="/materialTracking/erectionConfirmation" data-url="/materialTracking/erectionConfirmation">Erection Confirmation</a>
         </li>
         <li class="nav-item">
             <a class="nav-link ajax-link" href="/materialTracking/segmentHistoryReport" data-url="/materialTracking/segmentHistoryReport">Segment History Report</a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" id="userMasterId">
             <a class="nav-link ajax-link" href="/materialTracking/userMaster" data-url="/materialTracking/userMaster">User Master</a>
         </li>
     </ul>
@@ -114,8 +114,8 @@
 
 <!-- Images at the top-right corner -->
 <div class="top-right-images">
-<!--    <img th:src="@{/images/paramount.jpg}" alt="Logo 1">-->
-<!--    <img th:src="@{/images/paramount1.jpg}" alt="Logo 2">-->
+    <!--    <img th:src="@{/images/paramount.jpg}" alt="Logo 1">-->
+    <!--    <img th:src="@{/images/paramount1.jpg}" alt="Logo 2">-->
 </div>
 
 <div class="content" id="content">
@@ -134,63 +134,101 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 <script>
     $(document).ready(function() {
-        // Apply saved state of the sidebar from localStorage
-        if (localStorage.getItem('sidebarCollapsed') === 'true') {
-            $('#sidebar').addClass('collapsed');
-            $('#content').addClass('collapsed');
-        }
-
-        $('#collapseButton').on('click', function() {
-            $('#sidebar').toggleClass('collapsed');
-            $('#content').toggleClass('collapsed');
-
-            // Save the current state of the sidebar in localStorage
-            localStorage.setItem('sidebarCollapsed', $('#sidebar').hasClass('collapsed'));
-        });
-
-        $('.ajax-link').on('click', function(event) {
-            event.preventDefault(); // Prevent the default link behavior
-
-            var apiUrl = $(this).data('url'); // Get the API URL from data attribute
-
+        // Function to check user access rights
+        function checkUserAccess() {
             $.ajax({
-                url: apiUrl,
+                url: '/materialTracking/api/user/access', // Replace with your actual endpoint
                 method: 'GET',
                 success: function(response) {
-                    $('#content').html(response); // Load the returned HTML into the content area
+                    var accessLevel = response.accessRights; // Example: 'Admin', 'Casting', 'Erection'
 
-                    // Update the browser URL
-                    var newUrl = $(this).attr('href');
-                    history.pushState(null, '', newUrl);
+                    if (accessLevel === 'Admin') {
+                        // Show all items for Admin
+                        $('#segmentConfirmationItem').show();
+                        $('#dispatchConfirmationItem').show();
+                        $('#receiveConfirmationItem').show();
+                        $('#erectionConfirmationItem').show();
+                        $('#userMasterId').show();
+                    } else if (accessLevel === 'Casting') {
+                        // Hide specific items for Casting
+                        $('#segmentConfirmationItem').show();
+                        $('#dispatchConfirmationItem').show();
+                        $('#receiveConfirmationItem').hide();
+                        $('#erectionConfirmationItem').hide();
+                        $('#userMasterId').hide();
+                    } else if (accessLevel === 'Erection') {
+                        // Hide specific items for Erection
+                        $('#segmentConfirmationItem').hide();
+                        $('#dispatchConfirmationItem').hide();
+                        $('#receiveConfirmationItem').show();
+                        $('#erectionConfirmationItem').show();
+                        $('#userMasterId').hide();
+                    }
 
-                    // Collapse the sidebar if the clicked link is one of the specified links
-                    var linkText = $(this).text().trim();
-                    var collapsibleLinks = [
-                        'Segment Confirmation',
-                        'Receive Confirmation',
-                        'Dispatch Confirmation',
-                        'Erection Confirmation'
-                    ];
-                    if (collapsibleLinks.includes(linkText)) {
+                    // Apply saved state of the sidebar from localStorage
+                    if (localStorage.getItem('sidebarCollapsed') === 'true') {
                         $('#sidebar').addClass('collapsed');
                         $('#content').addClass('collapsed');
-                        localStorage.setItem('sidebarCollapsed', 'true');
                     }
-                }.bind(this), // Bind 'this' to preserve context for newUrl
+
+                    $('#collapseButton').on('click', function() {
+                        $('#sidebar').toggleClass('collapsed');
+                        $('#content').toggleClass('collapsed');
+
+                        // Save the current state of the sidebar in localStorage
+                        localStorage.setItem('sidebarCollapsed', $('#sidebar').hasClass('collapsed'));
+                    });
+
+                    $('.ajax-link').on('click', function(event) {
+                        event.preventDefault(); // Prevent the default link behavior
+
+                        var apiUrl = $(this).data('url'); // Get the API URL from data attribute
+
+                        $.ajax({
+                            url: apiUrl,
+                            method: 'GET',
+                            success: function(response) {
+                                $('#content').html(response); // Load the returned HTML into the content area
+
+                                // Update the browser URL
+                                var newUrl = $(this).attr('href');
+                                history.pushState(null, '', newUrl);
+
+                                // Collapse the sidebar if the clicked link is one of the specified links
+                                var linkText = $(this).text().trim();
+                                var collapsibleLinks = [
+                                    'Segment Confirmation',
+                                    'Receive Confirmation',
+                                    'Dispatch Confirmation',
+                                    'Erection Confirmation'
+                                ];
+                                if (collapsibleLinks.includes(linkText)) {
+                                    $('#sidebar').addClass('collapsed');
+                                    $('#content').addClass('collapsed');
+                                    localStorage.setItem('sidebarCollapsed', 'true');
+                                }
+                            }.bind(this), // Bind 'this' to preserve context for newUrl
+                            error: function() {
+                                alert('An error occurred while loading the content.');
+                            }
+                        });
+                    });
+
+                    // Handle back/forward navigation
+                    window.onpopstate = function() {
+                        location.reload(); // Reload the page when navigating back/forward
+                    };
+                },
                 error: function() {
-                    alert('An error occurred while loading the content.');
+                    alert('An error occurred while checking user access.');
                 }
             });
-        });
+        }
 
-        // Handle back/forward navigation
-        window.onpopstate = function() {
-            location.reload(); // Reload the page when navigating back/forward
-        };
+        // Call the function to check user access rights on page load
+        checkUserAccess();
     });
 </script>
-
-
 
 </body>
 </html>

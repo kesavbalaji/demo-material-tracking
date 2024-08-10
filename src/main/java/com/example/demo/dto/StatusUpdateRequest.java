@@ -23,5 +23,7 @@ public class StatusUpdateRequest {
 
     private String dispatchId;
 
+    private String qaTest;
+
 }
 

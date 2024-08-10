@@ -132,7 +132,7 @@ public class MainController {
     @PostMapping("/api/updateStatus")
     public ResponseEntity<String> updateStatus(@RequestBody StatusUpdateRequest request) {
         try {
-            castingYardService.updateStatus(request.getSegmentIds(), request.getStatus(), request.getCastingDate());
+            castingYardService.updateStatus(request.getSegmentIds(), request.getStatus(), request.getCastingDate(), request.getQaTest());
             return ResponseEntity.ok("Status updated successfully");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error occurred while updating status");
@@ -201,6 +201,16 @@ public class MainController {
     @DeleteMapping("/api/users/{userId}")
     public List<User> addUsers(@PathVariable(value = "userId") Integer userId) {
         return castingYardService.deleteUser(userId);
+    }
+
+    @PostMapping("/api/entities/delete")
+    public void deleteSegmentId(@RequestBody CastingYardData castingYardData) {
+        castingYardService.deleteSegmentId(castingYardData.getId());
+    }
+
+    @GetMapping("/api/user/access")
+    public User checkAccess() {
+        return castingYardService.getAccessRights();
     }
 
 }

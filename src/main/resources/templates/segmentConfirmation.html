@@ -11,6 +11,10 @@
             font-size: 1.2rem; /* Increase font size */
             font-weight: bold; /* Make text bold */
         }
+        .btn-group .btn.active {
+            background-color: #007bff;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -49,6 +53,12 @@
             <label for="castingDate">Casting Date:</label>
             <input type="date" class="form-control" id="castingDate">
         </div>
+        <div class="form-group">
+            <div class="btn-group" role="group" aria-label="QA Test">
+                <button type="button" class="btn btn-secondary active" id="btnApproved">Approved</button>
+                <button type="button" class="btn btn-secondary" id="btnRejected">Rejected</button>
+            </div>
+        </div>
         <button type="submit" class="btn btn-primary">Confirm</button>
         <button type="reset" class="btn btn-secondary">Clear</button>
     </form>
@@ -68,123 +78,143 @@
 
 <script>
     $(document).ready(function() {
-    let counter = 1; // Initialize counter for serial numbers
+        let counter = 1; // Initialize counter for serial numbers
+        let qaTest = 'Approved'; // Default value for toggle button
 
-    // Function to format date as "YYYY-MM-DD"
-    function formatDate(date) {
-        const d = new Date(date);
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-
-    // Function to parse date from "YYYY-MM-DD" format
-    function parseDate(dateStr) {
-        return new Date(dateStr);
-    }
-
-    $('#barcode').on('keypress', function(e) {
-        if (e.which == 13) { // Enter key pressed
-            e.preventDefault(); // Prevent default action
-            const barcode = $('#barcode').val();
-            $.ajax({
-                url: '/materialTracking/api/getSegmentData/' + barcode,
-                method: 'GET',
-                success: function(response) {
-                    if (response.printStatus === 'QA CONFIRMED') {
-                        alert('This segment is already QA CONFIRMED.');
-                        return; // Stop further processing
-                    }
-
-                    // Populate form fields with backend data
-                    $('#segmentBarcodeId').val(response.segmentBarcodeId);
-                    $('#location').val(response.location);
-                    $('#familyType').val(response.familyType);
-                    $('#family').val(response.family);
-                    $('#referenceLevel').val(response.referenceLevel);
-                    $('#volume').val(response.volume);
-
-                    // Convert castingDate to date format if provided
-                    if (response.castingDate) {
-                        const formattedDate = formatDate(response.castingDate);
-                        $('#castingDate').val(formattedDate);
-                    } else {
-                        $('#castingDate').val(''); // Ensure it is empty if not provided
-                    }
-
-                    // Check if the segment ID already exists in the table
-                    const segmentId = response.segmentBarcodeId;
-                    const existingIds = $('#resultTable tbody tr').map(function() {
-                        return $(this).find('td').eq(1).text();
-                    }).get();
-
-                    if (!existingIds.includes(segmentId)) {
-                        // Add data to result table with sequential serial number
-                        $('#resultTable tbody').append(
-                            `<tr>
-                                <td>${counter++}</td>
-                                <td>${segmentId}</td>
-                            </tr>`
-                        );
-                    }
-
-                    // Clear the Scan Barcode field
-                    $('#barcode').val('');
-                },
-                error: function() {
-                    alert('Error retrieving data.');
-                }
-            });
-        }
-    });
-
-    $('#searchForm').on('submit', function(e) {
-        e.preventDefault(); // Prevent form submission
-
-        // Collect segment IDs from the table
-        let segmentIds = [];
-        $('#resultTable tbody tr').each(function() {
-            const segmentBarcodeId = $(this).find('td').eq(1).text();
-            segmentIds.push(segmentBarcodeId);
-        });
-
-        if (segmentIds.length === 0) {
-            alert('No segment IDs found in the table.');
-            return;
+        // Function to format date as "YYYY-MM-DD"
+        function formatDate(date) {
+            const d = new Date(date);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
 
-        // Collect form data including manually entered casting date
-        const castingDateInput = $('#castingDate').val();
-        const castingDate = castingDateInput ? parseDate(castingDateInput).toISOString().split('T')[0] : null; // Format date if provided
+        // Function to parse date from "YYYY-MM-DD" format
+        function parseDate(dateStr) {
+            return new Date(dateStr);
+        }
 
-        $.ajax({
-            url: '/materialTracking/api/updateStatus',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({
-                status: 'QA CONFIRMED',
-                segmentIds: segmentIds,
-                castingDate: castingDate
-            }),
-            success: function() {
-                alert('All segment IDs updated to QA CONFIRMED.');
-                // Optionally, you can clear the table and form here
-                $('#resultTable tbody').empty();
-                $('#searchForm')[0].reset();
-                counter = 1; // Reset counter after submission
-            },
-            error: function() {
-                alert('All segment IDs updated to QA CONFIRMED.');
-                // Optionally, you can clear the table and form here
-                $('#resultTable tbody').empty();
-                $('#searchForm')[0].reset();
-                counter = 1; // Reset counter after submission
+        $('#barcode').on('keypress', function(e) {
+            if (e.which == 13) { // Enter key pressed
+                e.preventDefault(); // Prevent default action
+                const barcode = $('#barcode').val();
+                $.ajax({
+                    url: '/materialTracking/api/getSegmentData/' + barcode,
+                    method: 'GET',
+                    success: function(response) {
+                        if (response.printStatus === 'QA CONFIRMED') {
+                            alert('This segment is already QA CONFIRMED.');
+                            return; // Stop further processing
+                        }
+
+                        // Populate form fields with backend data
+                        $('#segmentBarcodeId').val(response.segmentBarcodeId);
+                        $('#location').val(response.location);
+                        $('#familyType').val(response.familyType);
+                        $('#family').val(response.family);
+                        $('#referenceLevel').val(response.referenceLevel);
+                        $('#volume').val(response.volume);
+
+                        // Convert castingDate to date format if provided
+                        if (response.castingDate) {
+                            const formattedDate = formatDate(response.castingDate);
+                            $('#castingDate').val(formattedDate);
+                        } else {
+                            $('#castingDate').val(''); // Ensure it is empty if not provided
+                        }
+
+                        // Check if the segment ID already exists in the table
+                        const segmentId = response.segmentBarcodeId;
+                        const existingIds = $('#resultTable tbody tr').map(function() {
+                            return $(this).find('td').eq(1).text();
+                        }).get();
+
+                        if (!existingIds.includes(segmentId)) {
+                            // Add data to result table with sequential serial number
+                            $('#resultTable tbody').append(
+                                `<tr>
+                                    <td>${counter++}</td>
+                                    <td>${segmentId}</td>
+                                </tr>`
+                            );
+                        }
+
+                        // Clear the Scan Barcode field
+                        $('#barcode').val('');
+                    },
+                    error: function() {
+                        alert('Error retrieving data.');
+                    }
+                });
             }
         });
-    });
-});
 
+        $('#searchForm').on('submit', function(e) {
+            e.preventDefault(); // Prevent form submission
+
+            // Collect segment IDs from the table
+            let segmentIds = [];
+            $('#resultTable tbody tr').each(function() {
+                const segmentBarcodeId = $(this).find('td').eq(1).text();
+                segmentIds.push(segmentBarcodeId);
+            });
+
+            if (segmentIds.length === 0) {
+                alert('No segment IDs found in the table.');
+                return;
+            }
+
+            // Collect form data including manually entered casting date and QA Test value
+            const castingDateInput = $('#castingDate').val();
+            const castingDate = castingDateInput ? parseDate(castingDateInput).toISOString().split('T')[0] : null; // Format date if provided
+
+            $.ajax({
+                url: '/materialTracking/api/updateStatus',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    status: 'QA CONFIRMED',
+                    segmentIds: segmentIds,
+                    castingDate: castingDate,
+                    qaTest: qaTest // Include QA Test value
+                }),
+                success: function() {
+                    alert('All segment IDs updated to QA CONFIRMED.');
+                    // Optionally, you can clear the table and form here
+                    $('#resultTable tbody').empty();
+                    $('#searchForm')[0].reset();
+                    counter = 1; // Reset counter after submission
+                    qaTest = 'Approved'; // Reset toggle button state
+                    $('#btnApproved').addClass('active'); // Reset button state
+                    $('#btnRejected').removeClass('active');
+                },
+                error: function() {
+                    alert('All segment IDs updated to QA CONFIRMED.');
+                // Optionally, you can clear the table and form here
+                $('#resultTable tbody').empty();
+                $('#searchForm')[0].reset();
+                counter = 1; // Reset counter after submission
+                qaTest = 'Approved'; // Reset toggle button state
+                    $('#btnApproved').addClass('active'); // Reset button state
+                    $('#btnRejected').removeClass('active');
+                }
+            });
+        });
+
+        // Handle toggle button clicks
+        $('#btnApproved').on('click', function() {
+            qaTest = 'Approved';
+            $('#btnApproved').addClass('active');
+            $('#btnRejected').removeClass('active');
+        });
+
+        $('#btnRejected').on('click', function() {
+            qaTest = 'Rejected';
+            $('#btnRejected').addClass('active');
+            $('#btnApproved').removeClass('active');
+        });
+    });
 </script>
 
 </body>
