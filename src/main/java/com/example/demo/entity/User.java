@@ -21,9 +21,9 @@ public class User {
     @Column(name = "PASSWORD")
     private String password;
 
-    @Column(name = "NAME")
-    private String name;
+    @Column(name = "USERNAME")
+    private String username;
 
-    @Column(name = "ROLE")
-    private String role;
+    @Column(name = "ACCESS_RIGHTS")
+    private String accessRights;
 }

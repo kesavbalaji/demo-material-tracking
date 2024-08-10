@@ -92,29 +92,33 @@
 
     <!-- Search Form -->
     <form id="searchForm" class="mb-3">
-        <div class="form-group">
-            <label for="segmentId1">Segment ID:</label>
-            <input type="text" id="segmentId1" class="form-control">
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="segmentId1">Segment ID:</label>
+                <input type="text" id="segmentId1" class="form-control">
+            </div>
+            <div class="form-group col-md-4">
+                <label for="castingDateFrom">Casting Date From:</label>
+                <input type="date" id="castingDateFrom" class="form-control">
+            </div>
+            <div class="form-group col-md-4">
+                <label for="castingDateTo">Casting Date To:</label>
+                <input type="date" id="castingDateTo" class="form-control">
+            </div>
         </div>
-        <div class="form-group">
-            <label for="castingDateFrom">Casting Date From:</label>
-            <input type="date" id="castingDateFrom" class="form-control">
-        </div>
-        <div class="form-group">
-            <label for="castingDateTo">Casting Date To:</label>
-            <input type="date" id="castingDateTo" class="form-control">
-        </div>
-        <div class="form-group">
-            <label for="location">Location:</label>
-            <input type="text" id="location" class="form-control">
-        </div>
-        <div class="form-group">
-            <label for="erectionDateFrom">Erection Date From:</label>
-            <input type="date" id="erectionDateFrom" class="form-control">
-        </div>
-        <div class="form-group">
-            <label for="erectionDateTo">Erection Date To:</label>
-            <input type="date" id="erectionDateTo" class="form-control">
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="location">Location:</label>
+                <input type="text" id="location" class="form-control">
+            </div>
+            <div class="form-group col-md-4">
+                <label for="erectionDateFrom">Erection Date From:</label>
+                <input type="date" id="erectionDateFrom" class="form-control">
+            </div>
+            <div class="form-group col-md-4">
+                <label for="erectionDateTo">Erection Date To:</label>
+                <input type="date" id="erectionDateTo" class="form-control">
+            </div>
         </div>
         <button type="submit" class="btn btn-primary">Search</button>
     </form>
@@ -248,127 +252,56 @@
                     // Hide the row after printing
                     setTimeout(function() {
                         row.remove(); // This removes the row from the table
-                    }, 500); // Delay to ensure print dialog is opened before hiding the row
+                    }, 500); // Delay to ensure the QR code is generated before hiding
+
+                    // Update the print count in the row
+                    var printCountCell = row.find('td:eq(10)'); // Assuming the print count column is the 11th column (index 10)
+                    var printCount = parseInt(printCountCell.text()) || 0;
+                    printCountCell.text(printCount + 1);
                 } else {
-                    alert('User is not ADMIN to reprint');
+                    alert('Print count has reached its limit for this segment');
                 }
             },
-            error: function(error) {
-                console.log('Failed to check print count');
+            error: function(xhr, status, error) {
+                console.log('Error:', error);
+                alert('Failed to check print count');
             }
         });
     }
 
     function generateQRCode(data) {
-        $('#qrCode').empty(); // Clear the previous QR code if any
+        var qrCodeElement = document.getElementById('qrCode');
+        var segmentIdElement = document.getElementById('segmentId');
+        var printDateElement = document.getElementById('printDate');
+        var currentDate = new Date().toLocaleDateString('en-GB', {
+            day: '2-digit', month: 'short', year: 'numeric'
+        }).replace(/ /g, '-');
+        var qrCodeText = 'Segment Barcode ID: ' + data.segmentBarcodeId;
 
-        new QRCode(document.getElementById("qrCode"), {
-            text: `${data.segmentBarcodeId}`,
-            width: 378, // 100mm in pixels (378 pixels for 100mm assuming 96 DPI)
-            height: 378, // 100mm in pixels (378 pixels for 100mm assuming 96 DPI)
-            colorDark : "#000000",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H // Higher error correction level
+        // Clear the previous QR code
+        qrCodeElement.innerHTML = '';
+
+        // Generate new QR code
+        var qrCode = new QRCode(qrCodeElement, {
+            text: qrCodeText,
+            width: 200,
+            height: 200
         });
 
-        // Display Segment ID and Date
-        $('#segmentId').text(`${data.segmentBarcodeId}`);
-        $('#printDate').text(`${data.castingDate}`);
+        // Update the segment ID and print date
+        segmentIdElement.textContent = 'Segment ID: ' + data.segmentBarcodeId;
+        printDateElement.textContent = 'Date: ' + currentDate;
     }
 
     function printQRCode(data) {
-        var qrCodeHTML = `
-            <div class="print-content">
-                <div id="qrCode" style="width: 100mm; height: 100mm;"></div>
-                <div id="segmentId" style="font-size: 30pt;">${data.segmentBarcodeId}</div>
-                <div id="printDate" style="font-size: 30pt;">${data.castingDate}</div>
-            </div>
-        `;
-
-        var printWindow = window.open('', '', 'height=600,width=800');
-
-        printWindow.document.open();
-        printWindow.document.write(`
-            <html>
-            <head>
-                <style>
-                    @media print {
-                        body {
-                            margin: 0;
-                            font-family: Arial, sans-serif;
-                            text-align: center;
-                        }
-                        .print-content {
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            justify-content: center;
-                            height: 100vh; /* Full viewport height */
-                            margin: 0;
-                            padding: 0;
-                        }
-                        #qrCode {
-                            margin-bottom: 20px; /* Space between QR code and text */
-                            width: 80mm; /* Ensure QR code is 100mm */
-                            height: 80mm; /* Ensure QR code is 100mm */
-                        }
-                        #printButton {
-                            display: none; /* Hide the button during print */
-                        }
-                        footer {
-                            display: none; /* Hide the footer during print */
-                        }
-                        #segmentId, #printDate {
-                            font-size: 50pt; /* Increase font size for Segment ID and Date */
-                        }
-                        @page {
-                            size: auto;
-                            margin: 0;
-                        }
-                    }
-                </style>
-            </head>
-            <body>
-                ${qrCodeHTML}
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
-
-        // Generate the QR code for the print window
-        new QRCode(printWindow.document.getElementById("qrCode"), {
-            text: `${data.segmentBarcodeId}`,
-            width: 340, // 90mm in pixels (378 pixels for 100mm assuming 96 DPI)
-            height: 340, // 90mm in pixels (378 pixels for 100mm assuming 96 DPI)
-            colorDark : "#000000",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H // Higher error correction level
-        });
-
-        printWindow.print();
-
-        // AJAX request to update the print status and print count
-        $.ajax({
-            url: '/materialTracking/api/entities/updatePrintStatus',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({
-                segmentBarcodeId: data.segmentBarcodeId,
-                printStatus: 'Printed',
-                printCount: data.printCount + 1 // Increment the print count
-            }),
-            success: function(response) {
-                console.log('Print status updated successfully');
-                // Update the print count in the table
-                var updatedData = table.row(row).data();
-                updatedData.printCount += 1;
-                table.row(row).data(updatedData).draw(false);
-            },
-            error: function(error) {
-                console.log('Failed to update print status');
-            }
-        });
+        setTimeout(function() {
+            window.print();
+        }, 500);
     }
 </script>
+
+<footer>
+    <p>&copy; 2024 Your Company. All rights reserved.</p>
+</footer>
 </body>
 </html>

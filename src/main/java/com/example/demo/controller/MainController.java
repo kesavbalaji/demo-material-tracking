@@ -3,6 +3,7 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.*;
 import com.example.demo.entity.CastingYardData;
+import com.example.demo.entity.User;
 import com.example.demo.service.CastingYardServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -179,6 +180,27 @@ public class MainController {
     @PostMapping("/api/entities/search")
     public List<CastingYardData> getSegmentData(@RequestBody SearchReportDto searchReportDto) {
         return castingYardService.findEntities(searchReportDto);
+    }
+
+    @GetMapping("/api/users")
+    public List<User> getAllUsers() {
+        return castingYardService.findAllUsers();
+    }
+
+    @PostMapping("/api/users")
+    public List<User> addUsers(@RequestBody List<User> userDto) {
+        return castingYardService.addUsers(userDto);
+    }
+
+    @PutMapping("/api/users/{userId}")
+    public List<User> addUsers(@PathVariable(value = "userId") Integer userId,
+                               @RequestBody User users) {
+        return castingYardService.updateUser(userId, users);
+    }
+
+    @DeleteMapping("/api/users/{userId}")
+    public List<User> addUsers(@PathVariable(value = "userId") Integer userId) {
+        return castingYardService.deleteUser(userId);
     }
 
 }

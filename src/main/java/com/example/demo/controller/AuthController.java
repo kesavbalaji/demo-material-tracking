@@ -59,6 +59,11 @@ public class AuthController {
         return "segmentHistoryReport";
     }
 
+    @GetMapping("/userMaster")
+    public String userMaster() {
+        return "userMaster";
+    }
+
     @GetMapping("/homePage")
     public String homePage() {
         return "homePage";

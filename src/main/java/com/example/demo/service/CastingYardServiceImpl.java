@@ -1,15 +1,13 @@
 package com.example.demo.service;
 
 
-import com.example.demo.dto.InventoryStockDto;
-import com.example.demo.dto.PrintStatusUpdateRequest;
-import com.example.demo.dto.RegisterDto;
-import com.example.demo.dto.SearchReportDto;
+import com.example.demo.dto.*;
 import com.example.demo.entity.CastingYardData;
 import com.example.demo.entity.User;
 import com.example.demo.repository.CastingYardDetailsRepository;
 import com.example.demo.repository.UserRepository;
 import io.micrometer.common.util.StringUtils;
+import jakarta.transaction.Transactional;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +25,7 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -58,7 +57,7 @@ public class CastingYardServiceImpl {
         Integer printCount = castingYardDetailsRepository.getPrintCount(segmentId);
         String currentUsername = getCurrentUsername();
         Optional<User> user = userRepository.getUser(currentUsername);
-        if (user.get().getRole().equals("ADMIN"))
+        if (user.get().getAccessRights().equals("Admin"))
             return Boolean.TRUE;
         else if (printCount == 0)
             return Boolean.TRUE;
@@ -140,8 +139,8 @@ public class CastingYardServiceImpl {
         Optional<User> user = userRepository.getUser(registerDto.getAdminUsername());
         if (user.isPresent()) {
             User user1 = new User();
-            user1.setName(registerDto.getUsername());
-            user1.setRole("USER");
+            user1.setUsername(registerDto.getUsername());
+            user1.setAccessRights("User");
             user1.setPassword(registerDto.getPassword());
             userRepository.save(user1);
             return true;
@@ -260,5 +259,40 @@ public class CastingYardServiceImpl {
         else if (searchReportDto.getSegmentId() !=null && !searchReportDto.getSegmentId().isEmpty())
             return castingYardDetailsRepository.findReportByEntities(searchReportDto.getSegmentId());
         return null;
+    }
+
+    public List<User> findAllUsers() {
+        return userRepository.findAll();
+    }
+
+    public List<User> addUsers(List<User> userDto) {
+        String currentUsername = getCurrentUsername();
+        Optional<User> user = userRepository.getUser(currentUsername);
+        if (user.get().getAccessRights().equals("Admin")) {
+            return userRepository.saveAll(userDto);
+        }
+        return new ArrayList<>();
+    }
+
+    @Transactional
+    public List<User> updateUser(Integer id, User user) {
+        String currentUsername = getCurrentUsername();
+        Optional<User> users = userRepository.getUser(currentUsername);
+        if (users.get().getAccessRights().equals("Admin")) {
+            int updateUserModifying = userRepository.updateUserModifying(user.getUsername(), user.getPassword(), user.getAccessRights(), id);
+            return userRepository.findAll();
+        }
+        return new ArrayList<>();
+    }
+
+    @Transactional
+    public List<User> deleteUser(Integer id) {
+        String currentUsername = getCurrentUsername();
+        Optional<User> users = userRepository.getUser(currentUsername);
+        if (users.get().getAccessRights().equals("Admin")) {
+            int updateUserModifying = userRepository.deleteUser(id);
+            return userRepository.findAll();
+        }
+        return new ArrayList<>();
     }
 }
