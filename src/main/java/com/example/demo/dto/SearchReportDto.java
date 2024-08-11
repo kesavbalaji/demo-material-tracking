@@ -16,4 +16,5 @@ public class SearchReportDto {
     private String location;
     private String erectionDateFrom;
     private String erectionDateTo;
+    private String dispatchId;
 }

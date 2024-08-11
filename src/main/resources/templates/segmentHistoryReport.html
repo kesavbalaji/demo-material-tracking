@@ -98,6 +98,19 @@
                 <input type="text" id="segmentId1" class="form-control">
             </div>
             <div class="form-group col-md-4">
+                <label for="dispatchId">Dispatch ID:</label>
+                <input type="text" id="dispatchId" class="form-control">
+            </div>
+            <div class="form-group col-md-4">
+                <label for="location">Location:</label>
+                <select id="location" class="form-control">
+                    <option value="CASTING YARD">CASTING YARD</option>
+                    <option value="ERECTION">ERECTION YARD</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-4">
                 <label for="castingDateFrom">Casting Date From:</label>
                 <input type="date" id="castingDateFrom" class="form-control">
             </div>
@@ -105,16 +118,12 @@
                 <label for="castingDateTo">Casting Date To:</label>
                 <input type="date" id="castingDateTo" class="form-control">
             </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group col-md-4">
-                <label for="location">Location:</label>
-                <input type="text" id="location" class="form-control">
-            </div>
             <div class="form-group col-md-4">
                 <label for="erectionDateFrom">Erection Date From:</label>
                 <input type="date" id="erectionDateFrom" class="form-control">
             </div>
+        </div>
+        <div class="form-row">
             <div class="form-group col-md-4">
                 <label for="erectionDateTo">Erection Date To:</label>
                 <input type="date" id="erectionDateTo" class="form-control">
@@ -136,8 +145,7 @@
             <th>Type</th>
             <th>Length</th>
             <th>Volume</th>
-            <th>Print Count</th> <!-- Print Count Column -->
-            <th>Print</th> <!-- New Print Button Column -->
+            <th>Re-Print</th> <!-- New Print Button Column -->
         </tr>
         </thead>
         <tbody>
@@ -170,10 +178,9 @@
                 { "data": "type" },
                 { "data": "length" },
                 { "data": "volume" },
-                { "data": "printCount" }, // Print Count column
                 {
                     "data": null,
-                    "defaultContent": '<button class="btn btn-primary print-row">Print</button>',
+                    "defaultContent": '<button class="btn btn-primary print-row">Re-Print</button>',
                     "orderable": false
                 } // Print button column
             ]
@@ -200,27 +207,28 @@
             // Collect form data
             var searchData = {
                 segmentId: $('#segmentId1').val(),
-                castingDateFrom: formatDate($('#castingDateFrom').val()),
-                castingDateTo: formatDate($('#castingDateTo').val()),
+                castingDateFrom: $('#castingDateFrom').val(),
+                castingDateTo: $('#castingDateTo').val(),
                 location: $('#location').val(),
-                erectionDateFrom: $('#erectionDateFrom').val() || '',
-                erectionDateTo: $('#erectionDateTo').val() || ''
+                erectionDateFrom: $('#erectionDateFrom').val(),
+                erectionDateTo: $('#erectionDateTo').val(),
+                dispatchId: $('#dispatchId').val()
             };
 
             $.ajax({
-                url: '/materialTracking/api/entities/search',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(searchData),
-                success: function(response) {
-                    var table = $('#entityTable').DataTable();
-                    table.clear().rows.add(response).draw();
-                },
-                error: function(xhr, status, error) {
-                    console.log('Error:', error);
-                    alert('Failed to fetch search results');
-                }
-            });
+        url: '/materialTracking/api/entities/search',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(searchData),
+        success: function(response) {
+            var table = $('#entityTable').DataTable();
+            table.clear().rows.add(response).draw();
+        },
+        error: function(xhr, status, error) {
+            console.log('Error:', error);
+            alert('Failed to fetch search results');
+        }
+    });
         });
 
         window.addEventListener('beforeunload', function (e) {
@@ -229,12 +237,6 @@
             return confirmationMessage; // Webkit, Safari, Chrome
         });
     });
-
-    function formatDate(dateString) {
-        if (!dateString) return ''; // Return empty string if dateString is empty
-        var options = { day: '2-digit', month: 'short', year: 'numeric' };
-        return new Date(dateString).toLocaleDateString('en-GB', options).replace(/ /g, '-');
-    }
 
     function checkPrintCountAndPrint(data, row) {
         $.ajax({
@@ -252,56 +254,124 @@
                     // Hide the row after printing
                     setTimeout(function() {
                         row.remove(); // This removes the row from the table
-                    }, 500); // Delay to ensure the QR code is generated before hiding
-
-                    // Update the print count in the row
-                    var printCountCell = row.find('td:eq(10)'); // Assuming the print count column is the 11th column (index 10)
-                    var printCount = parseInt(printCountCell.text()) || 0;
-                    printCountCell.text(printCount + 1);
+                    }, 500); // Delay to ensure print dialog is opened before hiding the row
                 } else {
-                    alert('Print count has reached its limit for this segment');
+                    alert('No duplicates allowed');
                 }
             },
-            error: function(xhr, status, error) {
-                console.log('Error:', error);
-                alert('Failed to check print count');
+            error: function(error) {
+                console.log('Failed to check print count');
             }
         });
     }
 
     function generateQRCode(data) {
-        var qrCodeElement = document.getElementById('qrCode');
-        var segmentIdElement = document.getElementById('segmentId');
-        var printDateElement = document.getElementById('printDate');
-        var currentDate = new Date().toLocaleDateString('en-GB', {
-            day: '2-digit', month: 'short', year: 'numeric'
-        }).replace(/ /g, '-');
-        var qrCodeText = 'Segment Barcode ID: ' + data.segmentBarcodeId;
+        var qrText = `${data.segmentBarcodeId}`;
+        $('#qrCode').empty(); // Clear previous QR code
 
-        // Clear the previous QR code
-        qrCodeElement.innerHTML = '';
-
-        // Generate new QR code
-        var qrCode = new QRCode(qrCodeElement, {
-            text: qrCodeText,
-            width: 200,
-            height: 200
+        new QRCode(document.getElementById("qrCode"), {
+            text: qrText,
+            width: 378, // 100mm in pixels (378 pixels for 100mm assuming 96 DPI)
+            height: 378, // 100mm in pixels (378 pixels for 100mm assuming 96 DPI)
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H // Higher error correction level
         });
 
-        // Update the segment ID and print date
-        segmentIdElement.textContent = 'Segment ID: ' + data.segmentBarcodeId;
-        printDateElement.textContent = 'Date: ' + currentDate;
+        // Display Segment ID and Date
+        $('#segmentId').text(`${data.segmentBarcodeId}`);
+        $('#printDate').text(`${data.castingDate}`);
     }
 
     function printQRCode(data) {
-        setTimeout(function() {
-            window.print();
-        }, 500);
+        var qrCodeHTML = `
+            <div class="print-content">
+                <div id="qrCode" style="width: 100mm; height: 100mm;"></div>
+                <div id="segmentId" style="font-size: 30pt;">${data.segmentBarcodeId}</div>
+                <div id="printDate" style="font-size: 30pt;">${data.castingDate}</div>
+            </div>
+        `;
+
+        var printWindow = window.open('', '', 'height=600,width=800');
+
+        printWindow.document.open();
+        printWindow.document.write(`
+            <html>
+            <head>
+                <style>
+                    @media print {
+                        body {
+                            margin: 0;
+                            font-family: Arial, sans-serif;
+                            text-align: center;
+                        }
+                        .print-content {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                            height: 100vh; /* Full viewport height */
+                            margin: 0;
+                            padding: 0;
+                        }
+                        #qrCode {
+                            margin-bottom: 20px; /* Space between QR code and text */
+                            width: 80mm; /* Ensure QR code is 100mm */
+                            height: 80mm; /* Ensure QR code is 100mm */
+                        }
+                        #printButton {
+                            display: none; /* Hide the button during print */
+                        }
+                        footer {
+                            display: none; /* Hide the footer during print */
+                        }
+                        #segmentId, #printDate {
+                            font-size: 50pt; /* Increase font size for Segment ID and Date */
+                        }
+                        @page {
+                            size: auto;
+                            margin: 0;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                ${qrCodeHTML}
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+
+        // Generate the QR code for the print window
+        new QRCode(printWindow.document.getElementById("qrCode"), {
+            text: `${data.segmentBarcodeId}`,
+            width: 340, // 90mm in pixels (378 pixels for 100mm assuming 96 DPI)
+            height: 340, // 90mm in pixels (378 pixels for 100mm assuming 96 DPI)
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H // Higher error correction level
+        });
+
+        printWindow.print();
+
+        // AJAX request to update the print status and print count
+        $.ajax({
+            url: '/materialTracking/api/entities/updatePrintStatus',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                segmentBarcodeId: data.segmentBarcodeId,
+                printStatus: 'Printed',
+                printCount: 1
+            }),
+            success: function(response) {
+                console.log('Print status updated successfully');
+            },
+            error: function(error) {
+                console.log('Failed to update print status');
+            }
+        });
     }
 </script>
-
-<footer>
-    <p>&copy; 2024 Your Company. All rights reserved.</p>
-</footer>
 </body>
 </html>

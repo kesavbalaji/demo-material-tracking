@@ -266,6 +266,10 @@ public class CastingYardServiceImpl {
             return castingYardDetailsRepository.findReportsByErectedDate(searchReportDto.getErectionDateFrom(), searchReportDto.getErectionDateTo());
         else if (searchReportDto.getSegmentId() !=null && !searchReportDto.getSegmentId().isEmpty())
             return castingYardDetailsRepository.findReportByEntities(searchReportDto.getSegmentId());
+        else if (searchReportDto.getDispatchId() != null && !searchReportDto.getDispatchId().isEmpty())
+            return castingYardDetailsRepository.findByDispatchId(searchReportDto.getDispatchId());
+        else if (searchReportDto.getLocation() != null && !searchReportDto.getLocation().isEmpty())
+            return castingYardDetailsRepository.findByLocation(searchReportDto.getLocation());
         return null;
     }
 

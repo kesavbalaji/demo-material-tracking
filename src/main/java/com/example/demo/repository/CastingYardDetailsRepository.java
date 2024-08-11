@@ -76,6 +76,12 @@ public interface CastingYardDetailsRepository extends JpaRepository<CastingYardD
     @Query(value = "select * from casting_yard_details where segment_barcode_id = ?1", nativeQuery = true)
     List<CastingYardData> findReportByEntities(String segmentId);
 
+    @Query(value = "select * from casting_yard_details where dispatch_id = ?1", nativeQuery = true)
+    List<CastingYardData> findByDispatchId(String dispatchId);
+
+    @Query(value = "select * from casting_yard_details where location_status = ?1", nativeQuery = true)
+    List<CastingYardData> findByLocation(String location);
+
     @Query(value = "select * from casting_yard_details cyd where casting_date between ?1 and ?2", nativeQuery = true)
     List<CastingYardData> findReportsByCastingDate(String fromDate, String toDate);
 
