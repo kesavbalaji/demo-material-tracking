@@ -13,4 +13,5 @@ public class PrintStatusUpdateRequest {
     private String segmentBarcodeId;
     private String printStatus;
     private int printCount;
+    private String reprintReason;
 }

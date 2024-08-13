@@ -61,7 +61,7 @@
     $(document).ready(function() {
         function updateItemCount() {
             const count = $('#resultTable tbody tr').length;
-            $('#itemCount').text(`${count} item${count !== 1 ? 's' : ''}`);
+            $('#rowCount').text(`COUNT: ${count}`);
         }
 
         $('#barcode').on('keypress', function(e) {
@@ -95,7 +95,7 @@
                             // Add data to result table
                             $('#resultTable tbody').append(
                                 `<tr>
-                                    <td>${response.id}</td>
+                                    <td>${$('#resultTable tbody tr').length + 1}</td>
                                     <td>${segmentId}</td>
                                 </tr>`
                             );
@@ -158,5 +158,6 @@
         updateItemCount(); // Initial item count
     });
 </script>
+
 </body>
 </html>

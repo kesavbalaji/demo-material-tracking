@@ -31,6 +31,10 @@ public interface CastingYardDetailsRepository extends JpaRepository<CastingYardD
     @Query("UPDATE CastingYardData SET printStatus = 'PRINTED', printCount = ?2 WHERE segmentBarcodeId = ?1")
     int updateStatusAndCount(String segmentId, Integer printCount);
 
+    @Modifying
+    @Query("UPDATE CastingYardData SET printCount = ?2 WHERE segmentBarcodeId = ?1")
+    int reprintUpdatePrintStatus(String segmentId, Integer printCount);
+
 //    @Query(value = "update public.casting_yard_details cyd set print_status = 'PRINTED', print_count = ?2 where segment_barcode_id = ?1", nativeQuery = true)
 //    int updateStatusAndCount(String segmentId, Integer printCount);
 
@@ -91,6 +95,10 @@ public interface CastingYardDetailsRepository extends JpaRepository<CastingYardD
     @Modifying
     @Query("DELETE FROM CastingYardData WHERE id = ?1")
     int deleteSegment(Integer id);
+
+    @Modifying
+    @Query("UPDATE CastingYardData SET reprintReason = ?1 WHERE segmentBarcodeId = ?2")
+    int updateReprintReason(String reason, String segmentId);
 
 
 

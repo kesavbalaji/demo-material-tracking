@@ -76,4 +76,7 @@ public class CastingYardData {
 
     @Column(name = "created_date")
     private Date createdDate;
+
+    @Column(name = "reprint_reason")
+    private String reprintReason;
 }

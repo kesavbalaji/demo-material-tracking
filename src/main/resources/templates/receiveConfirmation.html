@@ -20,12 +20,12 @@
     <h2>Receive Confirmation</h2>
     <form id="searchForm">
         <div class="form-group">
-            <label for="dispatch">Dispatch Id:</label>
-            <input type="text" class="form-control" id="dispatch">
-        </div>
-        <div class="form-group">
             <label for="barcode">Scan Segment ID:</label>
             <input type="text" class="form-control" id="barcode">
+        </div>
+        <div class="form-group">
+            <label for="dispatch">Dispatch Id:</label>
+            <input type="text" class="form-control" id="dispatch" readonly>
         </div>
         <div class="form-group">
             <label for="segmentBarcodeId">Segment Barcode ID:</label>
@@ -73,6 +73,7 @@
                 }
             });
             updateRowCount();
+            $('#barcode').val('');
         }
 
         // Function to populate fields with segment data
@@ -131,19 +132,23 @@
                                     },
                                     error: function() {
                                         alert('Error retrieving segments for the dispatch ID.');
+                                        $('#barcode').val(''); // Clear Scan Segment ID field
                                     }
                                 });
 
                             } else {
                                 alert('Dispatch ID not found for the given segment ID.');
+                                $('#barcode').val(''); // Clear Scan Segment ID field
                             }
                         },
                         error: function() {
                             alert('Error retrieving dispatch ID.');
+                            $('#barcode').val(''); // Clear Scan Segment ID field
                         }
                     });
                 } else {
                     highlightRows(barcode); // Highlight rows if segment already exists in table
+                    $('#barcode').val(''); // Clear Scan Segment ID field
                 }
             }
         });

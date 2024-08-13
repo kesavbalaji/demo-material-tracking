@@ -39,9 +39,15 @@ public class MainController {
         return ResponseEntity.ok("Print status updated successfully");
     }
 
+    @PostMapping("/api/entities/reprintUpdatePrintStatus")
+    public ResponseEntity<String> reprintUpdatePrintStatus(@RequestBody PrintStatusUpdateRequest entityService) throws IOException {
+        castingYardService.reprintUpdatePrintStatus(entityService);
+        return ResponseEntity.ok("Print status updated successfully");
+    }
+
     @PostMapping("api/entities/checkPrintCount")
     public Boolean checkPrintCount(@RequestBody PrintStatusUpdateRequest printStatusUpdateRequest) throws IOException {
-        return castingYardService.checkPrintCount(printStatusUpdateRequest.getSegmentBarcodeId());
+        return castingYardService.checkPrintCount(printStatusUpdateRequest.getSegmentBarcodeId(), printStatusUpdateRequest.getReprintReason());
     }
 
     @PostMapping("/api/search")

@@ -54,14 +54,27 @@ public class CastingYardServiceImpl {
         castingYardDetailsRepository.updateStatusAndCount(segmentBarcodeId, updatedCount);
     }
 
-    public Boolean checkPrintCount(String segmentId) {
+    @Transactional
+    public void reprintUpdatePrintStatus(PrintStatusUpdateRequest printStatusUpdateRequest) {
+        String segmentBarcodeId = printStatusUpdateRequest.getSegmentBarcodeId();
+        int printCount = castingYardDetailsRepository.getPrintCount(segmentBarcodeId);
+        int updatedCount = printCount + 1;
+        castingYardDetailsRepository.reprintUpdatePrintStatus(segmentBarcodeId, updatedCount);
+    }
+
+    @Transactional
+    public Boolean checkPrintCount(String segmentId, String reason) {
         Integer printCount = castingYardDetailsRepository.getPrintCount(segmentId);
         String currentUsername = getCurrentUsername();
         Optional<User> user = userRepository.getUser(currentUsername);
-        if (user.get().getAccessRights().equals("Admin"))
+        if (user.get().getAccessRights().equals("Admin")) {
+            int updateReprintReason = castingYardDetailsRepository.updateReprintReason(reason, segmentId);
             return Boolean.TRUE;
-        else if (printCount == 0)
+        }
+        else if (printCount == 0) {
+            int updateReprintReason = castingYardDetailsRepository.updateReprintReason(reason, segmentId);
             return Boolean.TRUE;
+        }
         return Boolean.FALSE;
     }
 
