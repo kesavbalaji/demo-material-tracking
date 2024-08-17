@@ -109,6 +109,9 @@
         <li class="nav-item" id="userMasterId">
             <a class="nav-link ajax-link" href="/materialTracking/userMaster" data-url="/materialTracking/userMaster">User Master</a>
         </li>
+        <li class="nav-item" id="inventory">
+            <a class="nav-link ajax-link" href="/materialTracking/inventory" data-url="/materialTracking/inventory">Inventory</a>
+        </li>
     </ul>
 </div>
 
@@ -149,6 +152,7 @@
                         $('#receiveConfirmationItem').show();
                         $('#erectionConfirmationItem').show();
                         $('#userMasterId').show();
+                        $('#inventory').show();
                     } else if (accessLevel === 'Casting') {
                         // Hide specific items for Casting
                         $('#segmentConfirmationItem').show();
@@ -156,6 +160,7 @@
                         $('#receiveConfirmationItem').hide();
                         $('#erectionConfirmationItem').hide();
                         $('#userMasterId').hide();
+                        $('#inventory').hide();
                     } else if (accessLevel === 'Erection') {
                         // Hide specific items for Erection
                         $('#segmentConfirmationItem').hide();
@@ -163,6 +168,7 @@
                         $('#receiveConfirmationItem').show();
                         $('#erectionConfirmationItem').show();
                         $('#userMasterId').hide();
+                        $('#inventory').hide();
                     }
 
                     // Apply saved state of the sidebar from localStorage

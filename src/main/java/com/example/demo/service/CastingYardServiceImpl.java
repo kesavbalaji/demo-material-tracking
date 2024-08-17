@@ -22,12 +22,15 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class CastingYardServiceImpl {
@@ -70,8 +73,7 @@ public class CastingYardServiceImpl {
         if (user.get().getAccessRights().equals("Admin")) {
             int updateReprintReason = castingYardDetailsRepository.updateReprintReason(reason, segmentId);
             return Boolean.TRUE;
-        }
-        else if (printCount == 0) {
+        } else if (printCount == 0) {
             int updateReprintReason = castingYardDetailsRepository.updateReprintReason(reason, segmentId);
             return Boolean.TRUE;
         }
@@ -253,7 +255,6 @@ public class CastingYardServiceImpl {
     }
 
 
-
     public String getNextDispatchId() {
 
         LocalDate today = LocalDate.now();
@@ -272,19 +273,31 @@ public class CastingYardServiceImpl {
     }
 
     public List<CastingYardData> findEntities(SearchReportDto searchReportDto) {
-        SimpleDateFormat formatter = new SimpleDateFormat("dd-MMM-yyyy");
-        if (searchReportDto.getCastingDateFrom() != null && !searchReportDto.getCastingDateTo().isEmpty())
-            return castingYardDetailsRepository.findReportsByCastingDate(searchReportDto.getCastingDateFrom(), searchReportDto.getCastingDateTo());
-        else if (searchReportDto.getErectionDateFrom() != null && !searchReportDto.getErectionDateFrom().isEmpty())
-            return castingYardDetailsRepository.findReportsByErectedDate(searchReportDto.getErectionDateFrom(), searchReportDto.getErectionDateTo());
-        else if (searchReportDto.getSegmentId() !=null && !searchReportDto.getSegmentId().isEmpty())
-            return castingYardDetailsRepository.findReportByEntities(searchReportDto.getSegmentId());
-        else if (searchReportDto.getDispatchId() != null && !searchReportDto.getDispatchId().isEmpty())
-            return castingYardDetailsRepository.findByDispatchId(searchReportDto.getDispatchId());
-        else if (searchReportDto.getLocation() != null && !searchReportDto.getLocation().isEmpty())
-            return castingYardDetailsRepository.findByLocation(searchReportDto.getLocation());
+        SimpleDateFormat inputFormatter = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat outputFormatter = new SimpleDateFormat("dd-MMM-yyyy");
+
+        try {
+            if (searchReportDto.getCastingDateFrom() != null && !searchReportDto.getCastingDateFrom().isEmpty()) {
+                Date castingDateFrom = inputFormatter.parse(searchReportDto.getCastingDateFrom());
+                Date castingDateTo = inputFormatter.parse(searchReportDto.getCastingDateTo());
+                String formattedCastingDateFrom = outputFormatter.format(castingDateFrom);
+                String formattedCastingDateTo = outputFormatter.format(castingDateTo);
+                return castingYardDetailsRepository.findReportsByCastingDate(formattedCastingDateFrom, formattedCastingDateTo);
+            } else if (searchReportDto.getErectionDateFrom() != null && !searchReportDto.getErectionDateFrom().isEmpty()) {
+                return castingYardDetailsRepository.findReportsByErectedDate(searchReportDto.getErectionDateFrom(), searchReportDto.getErectionDateTo());
+            } else if (searchReportDto.getSegmentId() != null && !searchReportDto.getSegmentId().isEmpty()) {
+                return castingYardDetailsRepository.findReportByEntities(searchReportDto.getSegmentId());
+            } else if (searchReportDto.getDispatchId() != null && !searchReportDto.getDispatchId().isEmpty()) {
+                return castingYardDetailsRepository.findByDispatchId(searchReportDto.getDispatchId());
+            } else if (searchReportDto.getLocation() != null && !searchReportDto.getLocation().isEmpty()) {
+                return castingYardDetailsRepository.findByLocation(searchReportDto.getLocation());
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
         return null;
     }
+
 
     public List<User> findAllUsers() {
         return userRepository.findAll();
@@ -331,4 +344,80 @@ public class CastingYardServiceImpl {
         Optional<User> user = userRepository.getUser(currentUsername);
         return user.get();
     }
+
+    public CountDto getCountForInventory(String selectType) {
+        CountDto countDto = new CountDto();
+        if (selectType.equals("Total Segment Count")) {
+            int countForInventory = castingYardDetailsRepository.getCountForInventory();
+            return setCountReport(countDto, countForInventory);
+        } else if (selectType.equals("Total Printed Count")) {
+            int countForInventory = castingYardDetailsRepository.getPrintedCount();
+            return setCountReport(countDto, countForInventory);
+        } else if (selectType.equals("Total Pending Count")) {
+            int countForInventory = castingYardDetailsRepository.getPendingCount();
+            return setCountReport(countDto, countForInventory);
+        } else if (selectType.equals("Total QA Confirmed")) {
+            int countForInventory = castingYardDetailsRepository.getQAConfirmedCount();
+            return setCountReport(countDto, countForInventory);
+        } else if (selectType.equals("Total Dispatch Count")) {
+            int countForInventory = castingYardDetailsRepository.getDispatchCount();
+            return setCountReport(countDto, countForInventory);
+        } else if (selectType.equals("Erection Confirm Count")) {
+            int countForInventory = castingYardDetailsRepository.getErectionYardCount();
+            return setCountReport(countDto, countForInventory);
+        } else if (selectType.equals("Erection Completed Count")) {
+            int countForInventory = castingYardDetailsRepository.getErectionCompletedCount();
+            return setCountReport(countDto, countForInventory);
+        } else if (selectType.equals("RePrinted Segment")) {
+            int countForInventory = castingYardDetailsRepository.getReprintCount();
+            return setCountReport(countDto, countForInventory);
+        }
+        return new CountDto();
+    }
+
+    private static CountDto setCountReport(CountDto countDto, int countForInventory) {
+        countDto.setCount(countForInventory);
+        return countDto;
+    }
+
+    public List<CountDto> getSegmentIdForCount(String selectType) {
+        List<CountDto> segmentIds = new ArrayList<>();
+        if (selectType.equals("Total Segment Count")) {
+            List<CastingYardData> segmentIdsForCount = castingYardDetailsRepository.getSegmentIdsForCount();
+            populateValue(segmentIdsForCount, segmentIds);
+        } else if (selectType.equals("Total Printed Count")) {
+            List<CastingYardData> segmentIdsForCount = castingYardDetailsRepository.getPrintedCountList();
+            populateValue(segmentIdsForCount, segmentIds);
+        } else if (selectType.equals("Total Pending Count")) {
+            List<CastingYardData> segmentIdsForCount = castingYardDetailsRepository.getPendingCountList();
+            populateValue(segmentIdsForCount, segmentIds);
+        } else if (selectType.equals("Total QA Confirmed")) {
+            List<CastingYardData> segmentIdsForCount = castingYardDetailsRepository.getQAConfirmedCountList();
+            populateValue(segmentIdsForCount, segmentIds);
+        } else if (selectType.equals("Total Dispatch Count")) {
+            List<CastingYardData> segmentIdsForCount = castingYardDetailsRepository.getDispatchCountList();
+            populateValue(segmentIdsForCount, segmentIds);
+        } else if (selectType.equals("Erection Confirm Count")) {
+            List<CastingYardData> segmentIdsForCount = castingYardDetailsRepository.getErectionYardCountList();
+            populateValue(segmentIdsForCount, segmentIds);
+        } else if (selectType.equals("Erection Completed Count")) {
+            List<CastingYardData> segmentIdsForCount = castingYardDetailsRepository.getErectionCompleted();
+            populateValue(segmentIdsForCount, segmentIds);
+        } else if (selectType.equals("RePrinted Segment")) {
+            List<CastingYardData> segmentIdsForCount = castingYardDetailsRepository.getReprintSegmentId();
+            populateValue(segmentIdsForCount, segmentIds);
+        }
+
+        return segmentIds;
+    }
+
+    private static void populateValue(List<CastingYardData> segmentIdsForCount, List<CountDto> segmentIds) {
+        for (CastingYardData data : segmentIdsForCount) {
+            CountDto countDto = new CountDto();
+            countDto.setSegmentId(data.getSegmentBarcodeId());
+            countDto.setStatus(data.getPrintStatus());
+            segmentIds.add(countDto);
+        }
+    }
+
 }

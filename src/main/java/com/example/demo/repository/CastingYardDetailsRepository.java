@@ -1,6 +1,7 @@
 package com.example.demo.repository;
 
 
+import com.example.demo.dto.CountDto;
 import com.example.demo.dto.InventoryStockDto;
 import com.example.demo.entity.CastingYardData;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -89,7 +90,7 @@ public interface CastingYardDetailsRepository extends JpaRepository<CastingYardD
     @Query(value = "select * from casting_yard_details cyd where casting_date between ?1 and ?2", nativeQuery = true)
     List<CastingYardData> findReportsByCastingDate(String fromDate, String toDate);
 
-    @Query(value = "select * from casting_yard_details cyd where cast(created_date as varchar) between ?1 and ?2 and location_status = 'COMPLETED'\n", nativeQuery = true)
+    @Query(value = "select * from public.casting_yard_details cyd where cast(created_date as varchar) between ?1 and ?2 and print_status = 'COMPLETED'", nativeQuery = true)
     List<CastingYardData> findReportsByErectedDate(String fromDate, String toDate);
 
     @Modifying
@@ -100,8 +101,51 @@ public interface CastingYardDetailsRepository extends JpaRepository<CastingYardD
     @Query("UPDATE CastingYardData SET reprintReason = ?1 WHERE segmentBarcodeId = ?2")
     int updateReprintReason(String reason, String segmentId);
 
+    @Query(value = "select count(*) from casting_yard_details", nativeQuery = true)
+    int getCountForInventory();
 
+    @Query(value = "select count(*) from casting_yard_details where print_status = 'PRINTED'", nativeQuery = true)
+    int getPrintedCount();
 
+    @Query(value = "select count(*) from casting_yard_details where print_status = 'PENDING'", nativeQuery = true)
+    int getPendingCount();
 
+    @Query(value = "select * from casting_yard_details", nativeQuery = true)
+    List<CastingYardData> getSegmentIdsForCount();
 
+    @Query(value = "select count(*) from casting_yard_details where print_status = 'QA CONFIRMED'", nativeQuery = true)
+    int getQAConfirmedCount();
+
+    @Query(value = "select * from casting_yard_details where print_status = 'QA CONFIRMED'", nativeQuery = true)
+    List<CastingYardData> getQAConfirmedCountList();
+
+    @Query(value = "select * from casting_yard_details where print_status = 'PRINTED'", nativeQuery = true)
+    List<CastingYardData> getPrintedCountList();
+
+    @Query(value = "select * from casting_yard_details where print_status = 'PENDING'", nativeQuery = true)
+    List<CastingYardData> getPendingCountList();
+
+    @Query(value = "select count(*) from casting_yard_details cyd where dispatch_id is not null", nativeQuery = true)
+    int getDispatchCount();
+
+    @Query(value = "select * from casting_yard_details cyd where dispatch_id is not null", nativeQuery = true)
+    List<CastingYardData> getDispatchCountList();
+
+    @Query(value = "select count(*) from casting_yard_details cyd where cyd.print_count > 1", nativeQuery = true)
+    int getReprintCount();
+
+    @Query(value = "select * from casting_yard_details cyd where cyd.print_count > 1;", nativeQuery = true)
+    List<CastingYardData> getReprintSegmentId();
+
+    @Query(value = "select count(*) from casting_yard_details where print_status = 'COMPLETED'", nativeQuery = true)
+    int getErectionCompletedCount();
+
+    @Query(value = "select * from casting_yard_details where print_status = 'COMPLETED';", nativeQuery = true)
+    List<CastingYardData> getErectionCompleted();
+
+    @Query(value = "select count(*) from casting_yard_details where location_status = 'ERECTION YARD'", nativeQuery = true)
+    int getErectionYardCount();
+
+    @Query(value = "select * from casting_yard_details where location_status = 'ERECTION YARD';", nativeQuery = true)
+    List<CastingYardData> getErectionYardCountList();
 }

@@ -104,7 +104,8 @@
                         $('#barcode').val('');
                     },
                     error: function() {
-                        alert('Error fetching data.');
+                        alert('Segment Id is invalid.');
+                        $('#barcode').val('');
                     }
                 });
             }

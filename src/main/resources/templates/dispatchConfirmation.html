@@ -150,7 +150,7 @@
                     segmentIds: segmentIds
                 }),
                 success: function() {
-                    alert('All segment IDs updated to QA CONFIRMED.');
+                    alert('All segment IDs updated to Dispatch Id.');
                     // Clear the table and form after successful update
                     $('#resultTable tbody').empty();
                     $('#searchForm')[0].reset();
@@ -158,7 +158,7 @@
                     updateRowCount(); // Update row count
                 },
                 error: function() {
-                    alert('All segment IDs updated to QA CONFIRMED');
+                    alert('All segment IDs updated to Dispatch Id');
                      $('#resultTable tbody').empty();
                     $('#searchForm')[0].reset();
                     fetchNextDispatchId(); // Fetch the updated dispatch ID

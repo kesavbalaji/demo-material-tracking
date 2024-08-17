@@ -219,4 +219,14 @@ public class MainController {
         return castingYardService.getAccessRights();
     }
 
+    @PostMapping("/api/getCount")
+    public CountDto getCountForInventory(@RequestBody CountDto countDto) {
+        return castingYardService.getCountForInventory(countDto.getCountType());
+    }
+
+    @PostMapping("/api/getSegmentIds")
+    public List<CountDto> getSegmentIdForCount(@RequestBody CountDto countDto) {
+        return castingYardService.getSegmentIdForCount(countDto.getCountType());
+    }
+
 }

@@ -64,6 +64,11 @@ public class AuthController {
         return "userMaster";
     }
 
+    @GetMapping("/inventory")
+    public String inventoryMaster() {
+        return "inventory";
+    }
+
     @GetMapping("/homePage")
     public String homePage() {
         return "homePage";

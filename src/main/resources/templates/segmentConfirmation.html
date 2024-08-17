@@ -96,6 +96,12 @@
             return new Date(dateStr);
         }
 
+        // Function to update the row count
+        function updateRowCount() {
+            const rowCount = $('#resultTable tbody tr').length;
+            $('#rowCount').text(`COUNT: ${rowCount}`);
+        }
+
         $('#barcode').on('keypress', function(e) {
             if (e.which == 13) { // Enter key pressed
                 e.preventDefault(); // Prevent default action
@@ -139,13 +145,17 @@
                                     <td>${segmentId}</td>
                                 </tr>`
                             );
+                            // Update the row count
+                            updateRowCount();
                         }
 
                         // Clear the Scan Barcode field
                         $('#barcode').val('');
                     },
                     error: function() {
-                        alert('Error retrieving data.');
+                        alert('No such segment Id Present');
+                        $('#resultTable tbody').empty();
+                        $('#searchForm')[0].reset();
                     }
                 });
             }
@@ -189,9 +199,11 @@
                     qaTest = 'Approved'; // Reset toggle button state
                     $('#btnApproved').addClass('active'); // Reset button state
                     $('#btnRejected').removeClass('active');
+                    // Update the row count
+                    updateRowCount();
                 },
                 error: function() {
-                    alert('All segment IDs updated to QA CONFIRMED.');
+                   alert('All segment IDs updated to QA CONFIRMED.');
                 // Optionally, you can clear the table and form here
                 $('#resultTable tbody').empty();
                 $('#searchForm')[0].reset();
@@ -215,6 +227,9 @@
             $('#btnRejected').addClass('active');
             $('#btnApproved').removeClass('active');
         });
+
+        // Update the row count initially in case there are existing rows
+        updateRowCount();
     });
 </script>
 
