@@ -8,6 +8,7 @@
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
     <style>
         #qrCode {
             width: 100mm;
@@ -104,6 +105,7 @@
             <div class="form-group col-md-4">
                 <label for="location">Location:</label>
                 <select id="location" class="form-control">
+                    <option>Select</option>
                     <option value="CASTING YARD">CASTING YARD</option>
                     <option value="ERECTION">ERECTION YARD</option>
                 </select>
@@ -152,7 +154,7 @@
         <!-- Data will be populated here -->
         </tbody>
     </table>
-
+    <button type="button" class="btn btn-success" id="exportToExcel">Export to Excel</button>
     <!-- QR Code display area -->
     <div id="qrCodeContainer" class="mt-5">
         <div id="printArea" class="print-content">
@@ -192,221 +194,293 @@
 
 <script>
     $(document).ready(function() {
-        var table = $('#entityTable').DataTable({
-            "data": [],
-            "columns": [
-                { "data": "id" },
-                { "data": "segmentBarcodeId" },
-                { "data": "castingDate" },
-                { "data": "location" },
-                { "data": "referenceLevel" },
-                { "data": "family" },
-                { "data": "familyType" },
-                { "data": "type" },
-                { "data": "length" },
-                { "data": "volume" },
-                {
-                    "data": null,
-                    "defaultContent": '<button class="btn btn-primary print-row">Re-Print</button>',
-                    "orderable": false
-                }
-            ]
-        });
-
-        $('#entityTable tbody').on('click', 'button.print-row', function() {
-            // Remove highlight from all rows
-            $('#entityTable tbody tr').removeClass('highlight');
-
-            // Get the data for the clicked row
-            var row = $(this).closest('tr');
-            var data = table.row(row).data();
-
-            // Highlight the clicked row
-            row.addClass('highlight');
-
-            // Open the modal for description input
-            $('#descriptionModal').data('rowData', data).modal('show');
-        });
-
-        $('#submitDescription').on('click', function() {
-            var description = $('#description').val();
-            var data = $('#descriptionModal').data('rowData');
-
-            $('#descriptionModal').modal('hide');
-
-            // Check print count and print with description
-            checkPrintCountAndPrint(data, description);
-        });
-
-        $('#searchForm').on('submit', function(event) {
-            event.preventDefault();
-
-            // Collect form data
-            var searchData = {
-                segmentId: $('#segmentId1').val(),
-                dispatchId: $('#dispatchId').val(),
-                location: $('#location').val(),
-                castingDateFrom: $('#castingDateFrom').val(),
-                castingDateTo: $('#castingDateTo').val(),
-                erectionDateFrom: $('#erectionDateFrom').val(),
-                erectionDateTo: $('#erectionDateTo').val()
-            };
-
-            $.ajax({
-                url: '/materialTracking/api/entities/search',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(searchData),
-                success: function(response) {
-                    // Clear previous data
-                    table.clear();
-
-                    // Add new data
-                    table.rows.add(response).draw();
-                     $('#segmentId1').val('');
-                     $('#dispatchId').val('');
-                },
-                error: function(error) {
-                    console.log('Failed to search entities');
-                }
-            });
-        });
-
-        function checkPrintCountAndPrint(data, description) {
-            $.ajax({
-                url: '/materialTracking/api/entities/checkPrintCount',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    segmentBarcodeId: data.segmentBarcodeId,
-                    reprintReason: description // Send the reprint reason
-                }),
-                success: function(response) {
-                    if (response === true) {
-                        generateQRCode(data);
-                        printQRCode(data, description);
-
-                        // Hide the row after printing
-                        setTimeout(function() {
-                            table.row('.highlight').remove().draw();
-                        }, 500); // Delay to ensure print dialog is opened before hiding the row
-                    } else {
-                        alert('No duplicates allowed');
-                    }
-                },
-                error: function(error) {
-                    console.log('Failed to check print count');
-                }
-            });
-        }
-
-        function generateQRCode(data) {
-            var qrText = `${data.segmentBarcodeId}`;
-            $('#qrCode').empty(); // Clear previous QR code
-
-            new QRCode(document.getElementById("qrCode"), {
-                text: qrText,
-                width: 378,
-                height: 378,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
-
-            $('#segmentId').text(`${data.segmentBarcodeId}`);
-            $('#printDate').text(`${data.castingDate}`);
-        }
-
-        function printQRCode(data, description) {
-            var qrCodeHTML = `
-                <div class="print-content">
-                    <div id="qrCode" style="width: 100mm; height: 100mm;"></div>
-                    <div id="segmentId" style="font-size: 30pt;">${data.segmentBarcodeId}</div>
-                    <div id="printDate" style="font-size: 30pt;">${data.castingDate}</div>
-                </div>
-            `;
-
-            var printWindow = window.open('', '', 'height=600,width=800');
-
-            printWindow.document.open();
-            printWindow.document.write(`
-                <html>
-                <head>
-                    <style>
-                        @media print {
-                            body {
-                                margin: 0;
-                                font-family: Arial, sans-serif;
-                                text-align: center;
-                            }
-                            .print-content {
-                                display: flex;
-                                flex-direction: column;
-                                align-items: center;
-                                justify-content: center;
-                                height: 100vh;
-                                margin: 0;
-                                padding: 0;
-                            }
-                            #qrCode {
-                                margin-bottom: 20px;
-                                width: 80mm;
-                                height: 80mm;
-                            }
-                            #printButton {
-                                display: none;
-                            }
-                            footer {
-                                display: none;
-                            }
-                            #segmentId, #printDate {
-                                font-size: 50pt;
-                            }
-                            @page {
-                                size: auto;
-                                margin: 0;
-                            }
-                        }
-                    </style>
-                </head>
-                <body>
-                    ${qrCodeHTML}
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
-
-            new QRCode(printWindow.document.getElementById("qrCode"), {
-                text: `${data.segmentBarcodeId}`,
-                width: 340,
-                height: 340,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
-
-            printWindow.print();
-
-            // AJAX request to update the print status and print count
-            $.ajax({
-                url: '/materialTracking/api/entities/reprintUpdatePrintStatus',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    segmentBarcodeId: data.segmentBarcodeId,
-                    printStatus: 'Printed',
-                    printCount: 1,
-                    description: description // Send description along with the print status
-                }),
-                success: function(response) {
-                    console.log('Print status updated successfully');
-                },
-                error: function(error) {
-                    console.log('Failed to update print status');
-                }
-            });
+    var table = $('#entityTable').DataTable({
+        "data": [],
+        "columns": [
+            { "data": null }, // This will be used for the auto-increment ID
+            { "data": "segmentBarcodeId" },
+            { "data": "castingDate" },
+            { "data": "location" },
+            { "data": "referenceLevel" },
+            { "data": "family" },
+            { "data": "familyType" },
+            { "data": "type" },
+            { "data": "length" },
+            { "data": "volume" },
+            {
+                "data": null,
+                "defaultContent": '<button class="btn btn-primary print-row">Re-Print</button>',
+                "orderable": false
+            }
+        ],
+        "rowCallback": function(row, data, index) {
+            // Set the first column with auto-incremented ID
+            $('td:eq(0)', row).html(index + 1);
         }
     });
+
+    $('#exportToExcel').on('click', function() {
+        // Collect form data
+        var searchData = {
+            segmentId: lastSegmentId1,  // Use the stored values
+            dispatchId: lastDispatchId,  // Use the stored values
+            location: $('#location').val(),
+            castingDateFrom: $('#castingDateFrom').val(),
+            castingDateTo: $('#castingDateTo').val(),
+            erectionDateFrom: $('#erectionDateFrom').val(),
+            erectionDateTo: $('#erectionDateTo').val()
+        };
+
+        $.ajax({
+            url: '/materialTracking/api/entities/search',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(searchData),
+            success: function(response) {
+                // Prepare data for Excel
+                var excelData = response.map((row, index) => ({
+                    ID: index + 1,
+                    'Segment Barcode Id': row.segmentBarcodeId,
+                    'Casting Date': row.castingDate,
+                    Location: row.location,
+                    'Reference Level': row.referenceLevel,
+                    Family: row.family,
+                    'Family Type': row.familyType,
+                    Type: row.type,
+                    Length: row.length,
+                    Volume: row.volume,
+                    Description: row.description,
+                    Mark: row.mark,
+                    Count: row.count,
+                    'Left Corbel Distance': row.leftCorbelDistance,
+                    'Right Corbel Distance': row.rightCorbelDistance,
+                    'Print Status': row.printStatus,
+                    'Print Count': row.printCount,
+                    'Dispatch Id':  row.dispatchId,
+                    'Location Status': row.locationStatus,
+                    'Created Date': row.createdDate,
+                    'Reprint Reason': row.reprintReason
+                }));
+
+                // Convert JSON data to worksheet
+                var worksheet = XLSX.utils.json_to_sheet(excelData);
+
+                // Create a new workbook
+                var workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "SegmentHistoryReport");
+
+                // Export workbook to Excel file
+                XLSX.writeFile(workbook, 'SegmentHistoryReport.xlsx');
+            },
+            error: function(error) {
+                console.log('Failed to search entities');
+            }
+        });
+    });
+
+    var lastSegmentId1 = '';
+    var lastDispatchId = '';
+
+    $('#searchForm').on('submit', function(event) {
+        event.preventDefault();
+
+        lastSegmentId1 = $('#segmentId1').val();
+        lastDispatchId = $('#dispatchId').val();
+
+        // Collect form data
+        var searchData = {
+            segmentId: lastSegmentId1,
+            dispatchId: lastDispatchId,
+            location: $('#location').val(),
+            castingDateFrom: $('#castingDateFrom').val(),
+            castingDateTo: $('#castingDateTo').val(),
+            erectionDateFrom: $('#erectionDateFrom').val(),
+            erectionDateTo: $('#erectionDateTo').val()
+        };
+
+        $.ajax({
+            url: '/materialTracking/api/entities/search',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(searchData),
+            success: function(response) {
+                // Clear previous data
+                table.clear();
+
+                // Add new data
+                table.rows.add(response).draw();
+
+                // Reset form fields
+                $('#segmentId1').val('');
+                $('#dispatchId').val('');
+            },
+            error: function(error) {
+                console.log('Failed to search entities');
+            }
+        });
+    });
+
+    // Existing row click event logic remains the same
+    $('#entityTable tbody').on('click', 'button.print-row', function() {
+        // Remove highlight from all rows
+        $('#entityTable tbody tr').removeClass('highlight');
+
+        // Get the data for the clicked row
+        var row = $(this).closest('tr');
+        var data = table.row(row).data();
+
+        // Highlight the clicked row
+        row.addClass('highlight');
+
+        // Open the modal for description input
+        $('#descriptionModal').data('rowData', data).modal('show');
+    });
+
+    $('#submitDescription').on('click', function() {
+        var description = $('#description').val();
+        var data = $('#descriptionModal').data('rowData');
+
+        $('#descriptionModal').modal('hide');
+
+        // Check print count and print with description
+        checkPrintCountAndPrint(data, description);
+    });
+
+    function checkPrintCountAndPrint(data, description) {
+        $.ajax({
+            url: '/materialTracking/api/entities/checkPrintCount',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                segmentBarcodeId: data.segmentBarcodeId,
+                reprintReason: description // Send the reprint reason
+            }),
+            success: function(response) {
+                if (response === true) {
+                    generateQRCode(data);
+                    printQRCode(data, description);
+
+                    // Hide the row after printing
+                    setTimeout(function() {
+                        table.row('.highlight').remove().draw();
+                    }, 500); // Delay to ensure print dialog is opened before hiding the row
+                } else {
+                    alert('No duplicates allowed');
+                }
+            },
+            error: function(error) {
+                console.log('Failed to check print count');
+            }
+        });
+    }
+
+    function generateQRCode(data) {
+        var qrText = `${data.segmentBarcodeId}`;
+        $('#qrCode').empty(); // Clear previous QR code
+
+        new QRCode(document.getElementById("qrCode"), {
+            text: qrText,
+            width: 378,
+            height: 378,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+
+        $('#segmentId').text(`${data.segmentBarcodeId}`);
+        $('#printDate').text(`${data.castingDate}`);
+    }
+
+    function printQRCode(data, description) {
+        var qrCodeHTML = `
+            <div class="print-content">
+                <div id="qrCode" style="width: 100mm; height: 100mm;"></div>
+                <div id="segmentId" style="font-size: 30pt;">${data.segmentBarcodeId}</div>
+                <div id="printDate" style="font-size: 30pt;">${data.castingDate}</div>
+            </div>
+        `;
+
+        var printWindow = window.open('', '', 'height=600,width=800');
+
+        printWindow.document.open();
+        printWindow.document.write(`
+            <html>
+            <head>
+                <style>
+                    @media print {
+                        body {
+                            margin: 0;
+                            font-family: Arial, sans-serif;
+                            text-align: center;
+                        }
+                        .print-content {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                            height: 100vh;
+                            margin: 0;
+                            padding: 0;
+                        }
+                        #qrCode {
+                            margin-bottom: 20px;
+                            width: 80mm;
+                            height: 80mm;
+                        }
+                        #printButton {
+                            display: none;
+                        }
+                        footer {
+                            display: none;
+                        }
+                        #segmentId, #printDate {
+                            font-size: 50pt;
+                        }
+                        @page {
+                            size: auto;
+                            margin: 0;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                ${qrCodeHTML}
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+
+        new QRCode(printWindow.document.getElementById("qrCode"), {
+            text: `${data.segmentBarcodeId}`,
+            width: 321,
+            height: 321,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+
+        printWindow.print();
+
+        // AJAX request to update the print status and print count
+        $.ajax({
+            url: '/materialTracking/api/entities/reprintUpdatePrintStatus',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                segmentBarcodeId: data.segmentBarcodeId,
+                printStatus: 'Printed',
+                printCount: 1,
+                description: description // Send description along with the print status
+            }),
+            success: function(response) {
+                console.log('Print status updated successfully');
+            },
+            error: function(error) {
+                console.log('Failed to update print status');
+            }
+        });
+    }
+});
 </script>
 
 

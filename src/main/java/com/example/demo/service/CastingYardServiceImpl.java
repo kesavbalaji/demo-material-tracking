@@ -230,15 +230,15 @@ public class CastingYardServiceImpl {
         Cell cell13 = row.getCell(12);
         Cell cell14 = row.getCell(13);
 
-        statement.setString(1, cell1.getStringCellValue());
+        statement.setString(1, String.valueOf(cell1));
         statement.setString(2, cell2 != null && cell2.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell2.toString()) ? cell2.toString() : "");
-        statement.setString(3, cell3.getStringCellValue());
-        statement.setString(4, cell4.getStringCellValue());
-        statement.setString(5, cell5.getStringCellValue());
-        statement.setString(6, cell6.getStringCellValue());
-        statement.setString(7, cell7 != null && cell7.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell7.toString()) ? cell7.getStringCellValue() : "");
-        statement.setString(8, cell8.getStringCellValue());
-        statement.setString(9, cell9.getStringCellValue());
+        statement.setString(3,  String.valueOf(cell3));
+        statement.setString(4,  String.valueOf(cell4));
+        statement.setString(5,  String.valueOf(cell5));
+        statement.setString(6,  String.valueOf(cell6));
+        statement.setString(7, cell7 != null && cell7.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell7.toString()) ? String.valueOf(cell7) : "");
+        statement.setString(8,  String.valueOf(cell8));
+        statement.setString(9,  String.valueOf(cell9));
         statement.setString(10, String.valueOf(cell10));
         statement.setString(11, String.valueOf(cell11));
 

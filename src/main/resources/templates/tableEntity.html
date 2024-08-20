@@ -341,8 +341,8 @@
         // Generate the QR code for the print window
         new QRCode(printWindow.document.getElementById("qrCode"), {
             text: `${data.segmentBarcodeId}`,
-            width: 340, // 90mm in pixels (378 pixels for 100mm assuming 96 DPI)
-            height: 340, // 90mm in pixels (378 pixels for 100mm assuming 96 DPI)
+            width: 321, // 90mm in pixels (378 pixels for 100mm assuming 96 DPI)
+            height: 321, // 90mm in pixels (378 pixels for 100mm assuming 96 DPI)
             colorDark : "#000000",
             colorLight : "#ffffff",
             correctLevel : QRCode.CorrectLevel.H // Higher error correction level
