@@ -201,6 +201,7 @@
                     $('#btnRejected').removeClass('active');
                     // Update the row count
                     updateRowCount();
+                    $('#rowCount').text('COUNT: 0');
                 },
                 error: function() {
                    alert('All segment IDs updated to QA CONFIRMED.');
@@ -211,6 +212,8 @@
                 qaTest = 'Approved'; // Reset toggle button state
                     $('#btnApproved').addClass('active'); // Reset button state
                     $('#btnRejected').removeClass('active');
+                    $('#rowCount').text('COUNT: 0');
+
                 }
             });
         });

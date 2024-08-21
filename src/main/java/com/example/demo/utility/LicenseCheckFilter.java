@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @Component
 public class LicenseCheckFilter extends OncePerRequestFilter {
 
-    private final LocalDate licenseExpiryDate = LocalDate.of(2024, 10, 30); // Set your license expiry date here
+    private final LocalDate licenseExpiryDate = LocalDate.of(2024, 10, 15); // Set your license expiry date here
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {

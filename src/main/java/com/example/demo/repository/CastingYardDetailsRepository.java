@@ -104,7 +104,7 @@ public interface CastingYardDetailsRepository extends JpaRepository<CastingYardD
     @Query(value = "select count(*) from casting_yard_details", nativeQuery = true)
     int getCountForInventory();
 
-    @Query(value = "select count(*) from casting_yard_details where print_status = 'PRINTED'", nativeQuery = true)
+    @Query(value = "select count(*) from casting_yard_details where print_status != 'PENDING'", nativeQuery = true)
     int getPrintedCount();
 
     @Query(value = "select count(*) from casting_yard_details where print_status = 'PENDING'", nativeQuery = true)
@@ -113,13 +113,13 @@ public interface CastingYardDetailsRepository extends JpaRepository<CastingYardD
     @Query(value = "select * from casting_yard_details", nativeQuery = true)
     List<CastingYardData> getSegmentIdsForCount();
 
-    @Query(value = "select count(*) from casting_yard_details where print_status = 'QA CONFIRMED'", nativeQuery = true)
+    @Query(value = "select count(*) from casting_yard_details where print_status != 'PENDING' and print_status != 'PRINTED'", nativeQuery = true)
     int getQAConfirmedCount();
 
-    @Query(value = "select * from casting_yard_details where print_status = 'QA CONFIRMED'", nativeQuery = true)
+    @Query(value = "select * from casting_yard_details where print_status != 'PENDING' and print_status != 'PRINTED'", nativeQuery = true)
     List<CastingYardData> getQAConfirmedCountList();
 
-    @Query(value = "select * from casting_yard_details where print_status = 'PRINTED'", nativeQuery = true)
+    @Query(value = "select * from casting_yard_details where print_status != 'PENDING'", nativeQuery = true)
     List<CastingYardData> getPrintedCountList();
 
     @Query(value = "select * from casting_yard_details where print_status = 'PENDING'", nativeQuery = true)
