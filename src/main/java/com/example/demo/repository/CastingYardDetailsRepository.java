@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 
 @Repository
@@ -35,6 +36,10 @@ public interface CastingYardDetailsRepository extends JpaRepository<CastingYardD
     @Modifying
     @Query("UPDATE CastingYardData SET printCount = ?2 WHERE segmentBarcodeId = ?1")
     int reprintUpdatePrintStatus(String segmentId, Integer printCount);
+
+    @Modifying
+    @Query("UPDATE CastingYardData SET printCount = ?2, printStatus = 'PRINTED' WHERE segmentBarcodeId = ?1")
+    int reprintUpdatePrintStatusAndStatus(String segmentId, Integer printCount);
 
 //    @Query(value = "update public.casting_yard_details cyd set print_status = 'PRINTED', print_count = ?2 where segment_barcode_id = ?1", nativeQuery = true)
 //    int updateStatusAndCount(String segmentId, Integer printCount);
@@ -148,4 +153,7 @@ public interface CastingYardDetailsRepository extends JpaRepository<CastingYardD
 
     @Query(value = "select * from casting_yard_details where location_status = 'ERECTION YARD';", nativeQuery = true)
     List<CastingYardData> getErectionYardCountList();
+
+    @Query(value = "select print_status from casting_yard_details where segment_barcode_id = ?1 and print_status = 'PENDING';", nativeQuery = true)
+    Optional<String> checkIfStatusIsPending(String segmentBarcodeId);
 }

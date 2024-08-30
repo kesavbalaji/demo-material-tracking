@@ -26,10 +26,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Service
@@ -62,7 +60,11 @@ public class CastingYardServiceImpl {
         String segmentBarcodeId = printStatusUpdateRequest.getSegmentBarcodeId();
         int printCount = castingYardDetailsRepository.getPrintCount(segmentBarcodeId);
         int updatedCount = printCount + 1;
-        castingYardDetailsRepository.reprintUpdatePrintStatus(segmentBarcodeId, updatedCount);
+        Optional<String> checkIfStatusIsPending = castingYardDetailsRepository.checkIfStatusIsPending(segmentBarcodeId);
+        if (checkIfStatusIsPending.isPresent())
+            castingYardDetailsRepository.reprintUpdatePrintStatusAndStatus(segmentBarcodeId, updatedCount);
+        else
+            castingYardDetailsRepository.reprintUpdatePrintStatus(segmentBarcodeId, updatedCount);
     }
 
     @Transactional
@@ -181,7 +183,7 @@ public class CastingYardServiceImpl {
                     continue; // Skip header row
                 }
 
-                String segmentBarcodeId = row.getCell(0).getStringCellValue();
+                String segmentBarcodeId = String.valueOf(row.getCell(0));
                 try (PreparedStatement insertStatement = connection.prepareStatement(insertSql);
                      PreparedStatement updateStatement = connection.prepareStatement(updateSql)) {
 
@@ -419,5 +421,44 @@ public class CastingYardServiceImpl {
             segmentIds.add(countDto);
         }
     }
+
+    public List<CountInfo> getAllCounts() {
+        // Create a list to hold the count information
+        List<CountInfo> countInfoList = new ArrayList<>();
+
+        // Define an array of count types and corresponding methods
+        String[] types = {
+                "Total Segment Count",
+                "Total Printed Count",
+                "Total Pending Count",
+                "Total QA Confirmed",
+                "Total Dispatch Count",
+                "Erection Confirm Count",
+                "Erection Completed Count",
+                "RePrinted Segment"
+        };
+
+        // Define a map of methods to retrieve counts
+        Map<String, Supplier<Integer>> countMethods = new HashMap<>();
+        countMethods.put("Total Segment Count", castingYardDetailsRepository::getCountForInventory);
+        countMethods.put("Total Printed Count", castingYardDetailsRepository::getPrintedCount);
+        countMethods.put("Total Pending Count", castingYardDetailsRepository::getPendingCount);
+        countMethods.put("Total QA Confirmed", castingYardDetailsRepository::getQAConfirmedCount);
+        countMethods.put("Total Dispatch Count", castingYardDetailsRepository::getDispatchCount);
+        countMethods.put("Erection Confirm Count", castingYardDetailsRepository::getErectionYardCount);
+        countMethods.put("Erection Completed Count", castingYardDetailsRepository::getErectionCompletedCount);
+        countMethods.put("RePrinted Segment", castingYardDetailsRepository::getReprintCount);
+
+        // Populate the list with CountInfo objects
+        for (String type : types) {
+            CountInfo countInfo = new CountInfo();
+            countInfo.setType(type);
+            countInfo.setCount(countMethods.get(type).get()); // Use the map to get the count
+            countInfoList.add(countInfo);
+        }
+
+        return countInfoList;
+    }
+
 
 }

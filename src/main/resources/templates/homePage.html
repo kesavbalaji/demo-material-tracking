@@ -76,6 +76,9 @@
             width: 80px; /* Adjust the width as needed */
             margin-left: 10px; /* Space between images */
         }
+        .top-right-images .btn {
+            margin-left: 10px; /* Space between button and images */
+        }
     </style>
 </head>
 <body>
@@ -115,10 +118,11 @@
     </ul>
 </div>
 
-<!-- Images at the top-right corner -->
+<!-- Images and Logout Button at the top-right corner -->
 <div class="top-right-images">
-    <!--    <img th:src="@{/images/paramount.jpg}" alt="Logo 1">-->
-    <!--    <img th:src="@{/images/paramount1.jpg}" alt="Logo 2">-->
+<!--    <img th:src="@{/images/paramount.jpg}" alt="Logo 1">-->
+<!--    <img th:src="@{/images/paramount1.jpg}" alt="Logo 2">-->
+    <button class="btn btn-danger" id="logoutButton">Logout</button>
 </div>
 
 <div class="content" id="content">
@@ -228,8 +232,28 @@
 
         // Call the function to check user access rights on page load
         checkUserAccess();
+
+        // Logout button click event
+        $('#logoutButton').on('click', function(event) {
+            event.preventDefault(); // Prevent the default link behavior
+
+            $.ajax({
+                url: '/materialTracking/api/logout', // Replace with your actual logout endpoint
+                method: 'POST',
+                success: function(response) {
+                    // Redirect to the login page after successful logout
+                    window.location.href = '/materialTracking/login';
+                },
+                error: function() {
+                    alert('An error occurred while logging out.');
+                }
+            });
+        });
     });
 </script>
 
+<!--<footer>-->
+<!--    <p>&copy; 2024 Segment Tracking System</p>-->
+<!--</footer>-->
 </body>
 </html>

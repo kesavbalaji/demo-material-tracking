@@ -17,7 +17,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, LicenseCheckFilter licenseCheckFilter) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
+        http.csrf(AbstractHttpConfigurer::disable)  // Consider enabling CSRF in production
                 .addFilterBefore(licenseCheckFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests((authorize) ->
                         authorize
@@ -25,13 +25,16 @@ public class SecurityConfig {
                                 .anyRequest().authenticated()
                 ).formLogin(
                         form -> form
-                                .loginPage("/login")
-                                .loginProcessingUrl("/login")
-                                .defaultSuccessUrl("/homePage", true)
+                                .loginPage("/login")  // Custom login page
+                                .loginProcessingUrl("/login")  // URL for form submit
+                                .defaultSuccessUrl("/homePage", true)  // Redirect on success
                                 .permitAll()
                 ).logout(
                         logout -> logout
                                 .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                                .logoutSuccessUrl("/login?logout")  // Redirect on logout
+                                .invalidateHttpSession(true)
+                                .deleteCookies("JSESSIONID")
                                 .permitAll()
                 );
         return http.build();
