@@ -1,50 +1,88 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Erection Confirmation</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            flex: 1;
+            padding-bottom: 5px; /* Space for footer */
+        }
+        .form-container {
+            margin-bottom: 30px; /* Space between the form and table */
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 40px; /* Adjusted height */
+            background-color: #f1f1f1;
+            border-top: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 -1px 4px rgba(0,0,0,0.1);
+        }
+        .footer img {
+            width: 30px;  /* Adjust the width to make the logo smaller */
+            height: auto;
+            margin-left: 10px;  /* Add spacing between text and image */
+        }
+    </style>
 </head>
 <body>
 <div class="container mt-4">
     <h2>Erection Confirmation</h2>
-    <form id="searchForm">
-        <div class="form-group">
-            <label for="barcode">Scan Barcode:</label>
-            <input type="text" class="form-control" id="barcode">
-        </div>
-        <div class="form-group">
-            <label for="segmentBarcodeId">Segment Barcode ID:</label>
-            <input type="text" class="form-control" id="segmentBarcodeId" readonly>
-        </div>
-        <div class="form-group">
-            <label for="location">Location:</label>
-            <input type="text" class="form-control" id="location" readonly>
-        </div>
-        <div class="form-group">
-            <label for="familyType">Family Type:</label>
-            <input type="text" class="form-control" id="familyType" readonly>
-        </div>
-        <div class="form-group">
-            <label for="family">Family:</label>
-            <input type="text" class="form-control" id="family" readonly>
-        </div>
-        <div class="form-group">
-            <label for="referenceLevel">Reference Level:</label>
-            <input type="text" class="form-control" id="referenceLevel" readonly>
-        </div>
-        <div class="form-group">
-            <label for="volume">Volume:</label>
-            <input type="number" class="form-control" id="volume" readonly>
-        </div>
-        <button type="submit" class="btn btn-primary">Confirm</button>
-        <button type="reset" class="btn btn-secondary" id="clearBtn">Clear</button>
-        <span id="rowCount" class="ml-3" style="font-size: 1.2em; font-weight: bold;">COUNT: 0</span>
-    </form>
+    <div class="form-container">
+        <form id="searchForm">
+            <div class="form-group">
+                <label for="barcode">Scan Barcode:</label>
+                <input type="text" class="form-control" id="barcode">
+            </div>
+            <div class="form-group">
+                <label for="segmentBarcodeId">Segment Barcode ID:</label>
+                <input type="text" class="form-control" id="segmentBarcodeId" readonly>
+            </div>
+            <div class="form-group">
+                <label for="location">Location:</label>
+                <input type="text" class="form-control" id="location" readonly>
+            </div>
+            <div class="form-group">
+                <label for="familyType">Family Type:</label>
+                <input type="text" class="form-control" id="familyType" readonly>
+            </div>
+            <div class="form-group">
+                <label for="family">Family:</label>
+                <input type="text" class="form-control" id="family" readonly>
+            </div>
+            <div class="form-group">
+                <label for="referenceLevel">Reference Level:</label>
+                <input type="text" class="form-control" id="referenceLevel" readonly>
+            </div>
+            <div class="form-group">
+                <label for="volume">Volume:</label>
+                <input type="number" class="form-control" id="volume" readonly>
+            </div>
+            <button type="submit" class="btn btn-primary">Confirm</button>
+            <button type="reset" class="btn btn-secondary" id="clearBtn">Clear</button>
+            <span id="rowCount" class="ml-3" style="font-size: 1.2em; font-weight: bold;">COUNT: 0</span>
+        </form>
+    </div>
 
-    <table class="table table-striped table-bordered mt-4" id="resultTable" style="width:100%">
+    <table class="table table-striped table-bordered" id="resultTable" style="width:100%">
         <thead>
         <tr>
             <th>SI.No</th>
@@ -57,10 +95,23 @@
     </table>
 </div>
 
+<footer class="footer">
+    <span>PARAMOUNT PRINT PACK</span>
+    <img th:src="@{/images/paramount.jpg}" alt="Logo 2">
+</footer>
+
 <script>
     $(document).ready(function() {
+        const table = $('#resultTable').DataTable({
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+            pageLength: 5 // Show 5 rows per page
+        });
+
         function updateItemCount() {
-            const count = $('#resultTable tbody tr').length;
+            const count = table.rows().count();
             $('#rowCount').text(`COUNT: ${count}`);
         }
 
@@ -87,18 +138,15 @@
 
                         // Check if the segment ID already exists in the table
                         const segmentId = response.segmentBarcodeId;
-                        const existingIds = $('#resultTable tbody tr').map(function() {
-                            return $(this).find('td').eq(1).text();
-                        }).get();
+                        const existingIds = table.column(1).data().toArray();
 
                         if (!existingIds.includes(segmentId)) {
                             // Add data to result table
-                            $('#resultTable tbody').append(
-                                `<tr>
-                                    <td>${$('#resultTable tbody tr').length + 1}</td>
-                                    <td>${segmentId}</td>
-                                </tr>`
-                            );
+                            table.row.add([
+                                table.rows().count() + 1,
+                                segmentId
+                            ]).draw(false);
+
                             updateItemCount(); // Update item count
                         }
                         $('#barcode').val('');
@@ -116,8 +164,8 @@
 
             // Collect segment IDs from the table
             let segmentIds = [];
-            $('#resultTable tbody tr').each(function() {
-                const segmentBarcodeId = $(this).find('td').eq(1).text();
+            table.rows().every(function() {
+                const segmentBarcodeId = this.data()[1];
                 segmentIds.push(segmentBarcodeId);
             });
 
@@ -136,22 +184,21 @@
                 }),
                 success: function() {
                     alert('All segment IDs moved to Completed.');
-                    // Optionally, you can clear the table and form here
-                    $('#resultTable tbody').empty();
+                    table.clear().draw(); // Clear table and redraw
                     $('#searchForm')[0].reset();
                     updateItemCount(); // Update item count
                 },
                 error: function() {
                     alert('All segment IDs moved to Completed.');
-                    $('#resultTable tbody').empty();
+                    table.clear().draw(); // Clear table and redraw
                     $('#searchForm')[0].reset();
-                    updateItemCount();
+                    updateItemCount(); // Update item count
                 }
             });
         });
 
         $('#clearBtn').on('click', function() {
-            $('#resultTable tbody').empty();
+            table.clear().draw(); // Clear table and redraw
             $('#searchForm')[0].reset();
             updateItemCount(); // Update item count
         });

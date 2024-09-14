@@ -1,10 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Master Screen</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 40px; /* Adjusted height */
+            background-color: #f1f1f1;
+            border-top: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 -1px 4px rgba(0,0,0,0.1);
+        }
+        .footer img {
+            width: 30px;  /* Adjust the width to make the logo smaller */
+            height: auto;
+            margin-left: 10px;  /* Add spacing between text and image */
+        }
+    </style>
+
 </head>
 <body>
 <div class="container mt-5">
@@ -60,6 +80,12 @@
         </div>
     </div>
 </div>
+
+<!-- Footer -->
+<footer class="footer">
+    <span>PARAMOUNT PRINT PACK</span>
+    <img th:src="@{/images/paramount.jpg}" alt="Logo 2">
+</footer>
 
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>

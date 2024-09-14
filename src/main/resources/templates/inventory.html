@@ -1,165 +1,224 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventory List</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            flex: 1;
+            padding-bottom: 40px; /* Space for the footer */
+        }
+
+        .table-responsive {
+            max-height: 400px; /* Adjust this height as needed */
+            overflow-y: auto;
+        }
+
+        .segment-details {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .segment-details table {
+            margin-top: 10px;
+        }
+
+        .segment-details input {
+            margin-bottom: 10px;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 40px; /* Adjusted height */
+            background-color: #f1f1f1;
+            border-top: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 -1px 4px rgba(0,0,0,0.1);
+        }
+        .footer img {
+            width: 30px;  /* Adjust the width to make the logo smaller */
+            height: auto;
+            margin-left: 10px;  /* Add spacing between text and image */
+        }
+    </style>
 </head>
 <body>
 <div class="container mt-5">
     <h2 class="mb-4">Inventory List</h2>
 
-    <table class="table">
-        <thead>
-        <tr>
-            <th>S.No</th>
-            <th>Count Type</th>
-            <th>Count</th>
-        </tr>
-        </thead>
-        <tbody id="countTable">
-        <!-- Counts will be populated here -->
-        </tbody>
-    </table>
-
-    <div id="segmentContainer" class="mt-4" style="display: none;">
-        <input type="text" id="searchSegment" class="form-control mb-3" placeholder="Search Segment ID">
-        <table class="table">
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
             <thead>
             <tr>
-                <th>ID</th>
-                <th>Segment ID</th>
-                <th>Status</th>
+                <th>S.No</th>
+                <th>Count Type</th>
+                <th>Count</th>
             </tr>
             </thead>
-            <tbody id="segmentTable">
-            <!-- Segment IDs will be populated here -->
+            <tbody id="countTable">
+            <!-- Counts will be populated here -->
             </tbody>
         </table>
+    </div>
+
+    <!-- Embedded Segment Details -->
+    <div id="segmentContainer" class="segment-details">
+        <input type="text" id="searchSegment" class="form-control" placeholder="Search Segment ID">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Segment ID</th>
+                    <th>Status</th>
+                </tr>
+                </thead>
+                <tbody id="segmentTable">
+                <!-- Segment IDs will be populated here -->
+                </tbody>
+            </table>
+        </div>
         <div id="pagination" class="mt-3"></div>
     </div>
 </div>
 
+<footer class="footer">
+    <span>PARAMOUNT PRINT PACK</span>
+    <img th:src="@{/images/paramount.jpg}" alt="Logo 2">
+</footer>
+
 <script>
     $(document).ready(function() {
-    // Function to load all counts when the page loads
-    function loadCounts() {
-        $.ajax({
-            url: '/materialTracking/api/getCounts', // Change this URL to your backend endpoint
-            type: 'GET', // Use GET for fetching counts
-            success: function(response) {
-                // Log response for debugging
-                console.log(response);
+        // Function to load all counts when the page loads
+        function loadCounts() {
+            $.ajax({
+                url: '/materialTracking/api/getCounts', // Change this URL to your backend endpoint
+                type: 'GET', // Use GET for fetching counts
+                success: function(response) {
+                    // Log response for debugging
+                    console.log(response);
 
-                // Check if response is an array
-                if (Array.isArray(response)) {
-                    let count = 1;
-                    response.forEach(countInfo => {
-                        $('#countTable').append(`
-                            <tr>
-                                <td>${count++}</td>
-                                <td>${countInfo.type}</td>
-                                <td><a href="#" class="count-link" data-type="${countInfo.type}">${countInfo.count}</a></td>
-                            </tr>
-                        `);
-                    });
-                } else {
-                    console.error('Unexpected response format:', response);
+                    // Check if response is an array
+                    if (Array.isArray(response)) {
+                        let count = 1;
+                        response.forEach(countInfo => {
+                            $('#countTable').append(`
+                                <tr>
+                                    <td>${count++}</td>
+                                    <td>${countInfo.type}</td>
+                                    <td><a href="#" class="count-link" data-type="${countInfo.type}">${countInfo.count}</a></td>
+                                </tr>
+                            `);
+                        });
+                    } else {
+                        console.error('Unexpected response format:', response);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
                 }
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', status, error);
-            }
-        });
-    }
-
-    // Load counts on page load
-    loadCounts();
-
-    // Handle click on count to fetch segment IDs
-    $(document).on('click', '.count-link', function(e) {
-        e.preventDefault();
-        const countType = $(this).data('type');
-
-        // Clear the segment table before each new fetch
-        $('#segmentTable').empty();
-
-        // AJAX call to fetch segment IDs based on count type
-        $.ajax({
-            url: '/materialTracking/api/getSegmentIds', // Change this URL to your backend endpoint
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ countType: countType }),
-            success: function(response) {
-                console.log(response); // Log the full response
-                populateSegmentTable(response); // Directly pass the response array
-                $('#segmentContainer').show(); // Show the segment ID table
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', status, error);
-            }
-        });
-    });
-
-    // Function to populate the segment table with pagination
-    function populateSegmentTable(data) {
-        if (!Array.isArray(data)) {
-            console.error('Invalid data:', data);
-            return; // Exit if data is not a valid array
-        }
-
-        console.log("Populating table with:", data); // Log the data being passed to the function
-        const itemsPerPage = 10;
-        const totalPages = Math.ceil(data.length / itemsPerPage);
-        let currentPage = 1;
-
-        function renderTable(page) {
-            $('#segmentTable').empty(); // Clear existing rows
-            const start = (page - 1) * itemsPerPage;
-            const end = start + itemsPerPage;
-            const paginatedItems = data.slice(start, end);
-
-            paginatedItems.forEach((segment, index) => {
-                $('#segmentTable').append(`
-                    <tr>
-                        <td>${start + index + 1}</td>
-                        <td>${segment.segmentId}</td>
-                        <td>${segment.status}</td>
-                    </tr>
-                `);
             });
-            console.log("Table rendered for page", page); // Log when the table is rendered
         }
 
-        function renderPagination() {
-            $('#pagination').empty();
-            for (let i = 1; i <= totalPages; i++) {
-                $('#pagination').append(`<button class="btn btn-sm btn-secondary page-btn">${i}</button> `);
+        // Load counts on page load
+        loadCounts();
+
+        // Handle click on count to fetch segment IDs
+        $(document).on('click', '.count-link', function(e) {
+            e.preventDefault();
+            const countType = $(this).data('type');
+
+            // Clear the segment table before each new fetch
+            $('#segmentTable').empty();
+
+            // AJAX call to fetch segment IDs based on count type
+            $.ajax({
+                url: '/materialTracking/api/getSegmentIds', // Change this URL to your backend endpoint
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ countType: countType }),
+                success: function(response) {
+                    console.log(response); // Log the full response
+                    populateSegmentTable(response); // Directly pass the response array
+                    $('#segmentContainer').slideDown(); // Show the segment ID table with a slide down effect
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                }
+            });
+        });
+
+        // Function to populate the segment table with pagination
+        function populateSegmentTable(data) {
+            if (!Array.isArray(data)) {
+                console.error('Invalid data:', data);
+                return; // Exit if data is not a valid array
             }
-        }
 
-        // Initial render
-        renderTable(currentPage);
-        renderPagination();
+            console.log("Populating table with:", data); // Log the data being passed to the function
+            const itemsPerPage = 10;
+            const totalPages = Math.ceil(data.length / itemsPerPage);
+            let currentPage = 1;
 
-        // Handle page button clicks
-        $(document).on('click', '.page-btn', function() {
-            currentPage = parseInt($(this).text());
+            function renderTable(page) {
+                $('#segmentTable').empty(); // Clear existing rows
+                const start = (page - 1) * itemsPerPage;
+                const end = start + itemsPerPage;
+                const paginatedItems = data.slice(start, end);
+
+                paginatedItems.forEach((segment, index) => {
+                    $('#segmentTable').append(`
+                        <tr>
+                            <td>${start + index + 1}</td>
+                            <td>${segment.segmentId}</td>
+                            <td>${segment.status}</td>
+                        </tr>
+                    `);
+                });
+                console.log("Table rendered for page", page); // Log when the table is rendered
+            }
+
+            function renderPagination() {
+                $('#pagination').empty();
+                for (let i = 1; i <= totalPages; i++) {
+                    $('#pagination').append(`<button class="btn btn-sm btn-secondary page-btn">${i}</button> `);
+                }
+            }
+
+            // Initial render
             renderTable(currentPage);
-        });
+            renderPagination();
 
-        // Handle search in the segment table
-        $('#searchSegment').on('keyup', function() {
-            const searchTerm = $(this).val().toLowerCase();
-            $('#segmentTable tr').filter(function() {
-                $(this).toggle($(this).text().toLowerCase().indexOf(searchTerm) > -1);
+            // Handle page button clicks
+            $(document).on('click', '.page-btn', function() {
+                currentPage = parseInt($(this).text());
+                renderTable(currentPage);
             });
-        });
-    }
-});
 
+            // Handle search in the segment table
+            $('#searchSegment').on('keyup', function() {
+                const searchTerm = $(this).val().toLowerCase();
+                $('#segmentTable tr').filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(searchTerm) > -1);
+                });
+            });
+        }
+    });
 </script>
 
 </body>
