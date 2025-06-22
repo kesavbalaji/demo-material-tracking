@@ -175,8 +175,10 @@ public class CastingYardServiceImpl {
              Connection connection = DriverManager.getConnection(jdbcURL, username, password)) {
 
             Sheet sheet = workbook.getSheetAt(0);
-            String insertSql = "INSERT INTO public.casting_yard_details(Segment_Barcode_ID, Casting_Date, Location,Reference_Level,Family,Family_Type,Description,Mark,Type,Length,Count,LEFT_CORBEL_DISTANCE,RIGHT_CORBEL_DISTANCE,Volume,print_status,print_count, location_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-            String updateSql = "UPDATE public.casting_yard_details SET Segment_Barcode_ID = ?, Casting_Date = ?, Location = ?, Reference_Level = ?, Family = ?, Family_Type = ?, Description = ?, Mark = ?, Type = ?, Length = ?, Count = ?, LEFT_CORBEL_DISTANCE = ?, RIGHT_CORBEL_DISTANCE = ?, Volume = ?, print_status = ?, print_count = ?, location_status = ? WHERE Segment_Barcode_ID = ?";
+            String insertSql = "INSERT INTO public.casting_yard_details(Segment_Barcode_ID, Casting_Date, Location, Reference_Level, Family, Family_Type, Description, Mark, Type, Length, Count, LEFT_CORBEL_DISTANCE, RIGHT_CORBEL_DISTANCE, Volume, print_status, print_count, location_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+            // Update SQL excluding the fields that shouldn't be updated on duplicate
+            String updateSql = "UPDATE public.casting_yard_details SET Casting_Date = ?, Location = ?, Reference_Level = ?, Family = ?, Family_Type = ?, Description = ?, Mark = ?, Type = ?, Length = ?, Count = ?, LEFT_CORBEL_DISTANCE = ?, RIGHT_CORBEL_DISTANCE = ?, Volume = ? WHERE Segment_Barcode_ID = ?";
 
             for (Row row : sheet) {
                 if (row.getRowNum() == 0) {
@@ -188,7 +190,7 @@ public class CastingYardServiceImpl {
                      PreparedStatement updateStatement = connection.prepareStatement(updateSql)) {
 
                     // Fill in the insert statement parameters
-                    fillPreparedStatement(insertStatement, row);
+                    fillPreparedStatement(insertStatement, row, true);
                     insertStatement.executeUpdate();
 
                 } catch (SQLException e) {
@@ -196,10 +198,9 @@ public class CastingYardServiceImpl {
                     if (e.getSQLState().equals("23505")) { // PostgreSQL unique key violation
                         System.out.println("Duplicate entry found: " + segmentBarcodeId + " - Updating this row instead.");
                         PreparedStatement updateStatement = connection.prepareStatement(updateSql);
-                        // Fill in the update statement parameters
-                        fillPreparedStatement(updateStatement, row);
-                        updateStatement.setString(17, "CASTING YARD");
-                        updateStatement.setString(18, segmentBarcodeId);// Set the Segment_Barcode_ID for the WHERE clause
+                        // Fill in the update statement parameters, excluding the columns we don't want to update
+                        fillPreparedStatement(updateStatement, row, false);
+                        updateStatement.setString(14, segmentBarcodeId); // Set the Segment_Barcode_ID for the WHERE clause
                         updateStatement.executeUpdate();
                     } else {
                         throw e; // If it's a different SQL exception, rethrow it
@@ -216,7 +217,8 @@ public class CastingYardServiceImpl {
         }
     }
 
-    private void fillPreparedStatement(PreparedStatement statement, Row row) throws SQLException {
+
+    private void fillPreparedStatement(PreparedStatement statement, Row row, boolean isInsert) throws SQLException {
         Cell cell1 = row.getCell(0);
         Cell cell2 = row.getCell(1);
         Cell cell3 = row.getCell(2);
@@ -232,29 +234,46 @@ public class CastingYardServiceImpl {
         Cell cell13 = row.getCell(12);
         Cell cell14 = row.getCell(13);
 
-        statement.setString(1, String.valueOf(cell1));
-        statement.setString(2, cell2 != null && cell2.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell2.toString()) ? cell2.toString() : "");
-        statement.setString(3,  String.valueOf(cell3));
-        statement.setString(4,  String.valueOf(cell4));
-        statement.setString(5,  String.valueOf(cell5));
-        statement.setString(6,  String.valueOf(cell6));
-        statement.setString(7, cell7 != null && cell7.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell7.toString()) ? String.valueOf(cell7) : "");
-        statement.setString(8,  String.valueOf(cell8));
-        statement.setString(9,  String.valueOf(cell9));
-        statement.setString(10, String.valueOf(cell10));
-        statement.setString(11, String.valueOf(cell11));
+        if (isInsert) {
+            // For insert, include all the fields
+            statement.setString(1, String.valueOf(cell1));
+            statement.setString(2, cell2 != null && cell2.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell2.toString()) ? cell2.toString() : "");
+            statement.setString(3, String.valueOf(cell3));
+            statement.setString(4, String.valueOf(cell4));
+            statement.setString(5, String.valueOf(cell5));
+            statement.setString(6, String.valueOf(cell6));
+            statement.setString(7, cell7 != null && cell7.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell7.toString()) ? String.valueOf(cell7) : "");
+            statement.setString(8, String.valueOf(cell8));
+            statement.setString(9, String.valueOf(cell9));
+            statement.setString(10, String.valueOf(cell10));
+            statement.setString(11, String.valueOf(cell11));
 
-        statement.setString(12, cell12 != null && cell12.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell12.toString()) ? String.valueOf(cell12.getNumericCellValue()) : "");
-        statement.setString(13, cell13 != null && cell13.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell13.toString()) ? String.valueOf(cell13.getNumericCellValue()) : "");
-        statement.setString(14, cell14 != null && cell14.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell14.toString()) ? String.valueOf(cell14.getNumericCellValue()) : "");
+            statement.setString(12, cell12 != null && cell12.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell12.toString()) ? String.valueOf(cell12.getNumericCellValue()) : "");
+            statement.setString(13, cell13 != null && cell13.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell13.toString()) ? String.valueOf(cell13.getNumericCellValue()) : "");
+            statement.setString(14, cell14 != null && cell14.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell14.toString()) ? String.valueOf(cell14.getNumericCellValue()) : "");
 
-        statement.setString(15, "PENDING");
+            statement.setString(15, "PENDING");
+            statement.setInt(16, 0);
+            statement.setString(17, "CASTING YARD");
+        } else {
+            // For update, exclude the fields that shouldn't be updated
+            statement.setString(1, cell2 != null && cell2.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell2.toString()) ? cell2.toString() : "");
+            statement.setString(2, String.valueOf(cell3));
+            statement.setString(3, String.valueOf(cell4));
+            statement.setString(4, String.valueOf(cell5));
+            statement.setString(5, String.valueOf(cell6));
+            statement.setString(6, cell7 != null && cell7.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell7.toString()) ? String.valueOf(cell7) : "");
+            statement.setString(7, String.valueOf(cell8));
+            statement.setString(8, String.valueOf(cell9));
+            statement.setString(9, String.valueOf(cell10));
+            statement.setString(10, String.valueOf(cell11));
 
-        // For print_count, change to setInt instead of setString
-        statement.setInt(16, 0);
-
-        statement.setString(17, "CASTING YARD");
+            statement.setString(11, cell12 != null && cell12.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell12.toString()) ? String.valueOf(cell12.getNumericCellValue()) : "");
+            statement.setString(12, cell13 != null && cell13.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell13.toString()) ? String.valueOf(cell13.getNumericCellValue()) : "");
+            statement.setString(13, cell14 != null && cell14.getCellType() != CellType.BLANK && StringUtils.isNotBlank(cell14.toString()) ? String.valueOf(cell14.getNumericCellValue()) : "");
+        }
     }
+
 
 
     public String getNextDispatchId() {
