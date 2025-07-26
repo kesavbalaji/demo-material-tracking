@@ -61,7 +61,7 @@
                 <input type="text" class="form-control" id="location" readonly>
             </div>
             <div class="form-group">
-                <label for="familyType">Family Type:</label>
+                <label for="familyType">Length:</label>
                 <input type="text" class="form-control" id="familyType" readonly>
             </div>
             <div class="form-group">
@@ -120,7 +120,7 @@
                 e.preventDefault(); // Prevent default action
                 const barcode = $('#barcode').val();
                 $.ajax({
-                    url: '/materialTracking/api/getErectionYardData/' + barcode,
+                    url: '/hostelOD/api/getErectionYardData/' + barcode,
                     method: 'GET',
                     success: function(response) {
                         if (response.printStatus === 'COMPLETED') {
@@ -131,7 +131,7 @@
                         // Populate form fields with backend data
                         $('#segmentBarcodeId').val(response.segmentBarcodeId);
                         $('#location').val(response.location);
-                        $('#familyType').val(response.familyType);
+                        $('#familyType').val(response.length);
                         $('#family').val(response.family);
                         $('#referenceLevel').val(response.referenceLevel);
                         $('#volume').val(response.volume);
@@ -175,7 +175,7 @@
             }
 
             $.ajax({
-                url: '/materialTracking/api/updateStatusAsCompleted',
+                url: '/hostelOD/api/updateStatusAsCompleted',
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({

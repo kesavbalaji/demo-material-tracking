@@ -247,7 +247,7 @@
         };
 
         $.ajax({
-            url: '/materialTracking/api/entities/search',
+            url: '/hostelOD/api/entities/search',
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(searchData),
@@ -314,7 +314,7 @@
         };
 
         $.ajax({
-            url: '/materialTracking/api/entities/search',
+            url: '/hostelOD/api/entities/search',
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(searchData),
@@ -363,7 +363,7 @@
 
     function checkPrintCountAndPrint(data, description) {
         $.ajax({
-            url: '/materialTracking/api/entities/checkPrintCount',
+            url: '/hostelOD/api/entities/checkPrintCount',
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({
@@ -478,7 +478,7 @@
 
         // AJAX request to update the print status and print count
         $.ajax({
-            url: '/materialTracking/api/entities/reprintUpdatePrintStatus',
+            url: '/hostelOD/api/entities/reprintUpdatePrintStatus',
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({

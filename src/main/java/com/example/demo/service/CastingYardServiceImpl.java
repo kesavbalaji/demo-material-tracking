@@ -6,6 +6,7 @@ import com.example.demo.entity.CastingYardData;
 import com.example.demo.entity.User;
 import com.example.demo.repository.CastingYardDetailsRepository;
 import com.example.demo.repository.UserRepository;
+import com.opencsv.CSVReader;
 import io.micrometer.common.util.StringUtils;
 import jakarta.transaction.Transactional;
 import org.apache.poi.ss.usermodel.*;
@@ -17,7 +18,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -29,6 +33,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class CastingYardServiceImpl {
@@ -171,51 +176,88 @@ public class CastingYardServiceImpl {
         String username = "postgres";
         String password = "postgres";
 
-        try (Workbook workbook = new XSSFWorkbook(file.getInputStream());
-             Connection connection = DriverManager.getConnection(jdbcURL, username, password)) {
+        String fileName = file.getOriginalFilename();
+        if (fileName == null) {
+            return "Invalid file.";
+        }
 
-            Sheet sheet = workbook.getSheetAt(0);
-            String insertSql = "INSERT INTO public.casting_yard_details(Segment_Barcode_ID, Casting_Date, Location, Reference_Level, Family, Family_Type, Description, Mark, Type, Length, Count, LEFT_CORBEL_DISTANCE, RIGHT_CORBEL_DISTANCE, Volume, print_status, print_count, location_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        try (Connection connection = DriverManager.getConnection(jdbcURL, username, password)) {
+            String insertSql = "INSERT INTO public.casting_yard_details_hostel(Segment_Barcode_ID, Casting_Date, Location, Reference_Level, Family, Family_Type, Description, Mark, Type, Length, Count, LEFT_CORBEL_DISTANCE, RIGHT_CORBEL_DISTANCE, Volume, print_status, print_count, location_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
-            // Update SQL excluding the fields that shouldn't be updated on duplicate
-            String updateSql = "UPDATE public.casting_yard_details SET Casting_Date = ?, Location = ?, Reference_Level = ?, Family = ?, Family_Type = ?, Description = ?, Mark = ?, Type = ?, Length = ?, Count = ?, LEFT_CORBEL_DISTANCE = ?, RIGHT_CORBEL_DISTANCE = ?, Volume = ? WHERE Segment_Barcode_ID = ?";
+            String updateSql = "UPDATE public.casting_yard_details_hostel SET Casting_Date = ?, Location = ?, Reference_Level = ?, Family = ?, Family_Type = ?, Description = ?, Mark = ?, Type = ?, Length = ?, Count = ?, LEFT_CORBEL_DISTANCE = ?, RIGHT_CORBEL_DISTANCE = ?, Volume = ? WHERE Segment_Barcode_ID = ?";
 
-            for (Row row : sheet) {
-                if (row.getRowNum() == 0) {
-                    continue; // Skip header row
-                }
+            if (fileName.endsWith(".xlsx")) {
+                // Process Excel file
+                try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+                    Sheet sheet = workbook.getSheetAt(0);
 
-                String segmentBarcodeId = String.valueOf(row.getCell(0));
-                try (PreparedStatement insertStatement = connection.prepareStatement(insertSql);
-                     PreparedStatement updateStatement = connection.prepareStatement(updateSql)) {
+                    for (Row row : sheet) {
+                        if (row.getRowNum() == 0) continue; // Skip header
 
-                    // Fill in the insert statement parameters
-                    fillPreparedStatement(insertStatement, row, true);
-                    insertStatement.executeUpdate();
+                        String segmentBarcodeId = String.valueOf(row.getCell(0));
 
-                } catch (SQLException e) {
-                    // Check if the exception is due to a unique key violation
-                    if (e.getSQLState().equals("23505")) { // PostgreSQL unique key violation
-                        System.out.println("Duplicate entry found: " + segmentBarcodeId + " - Updating this row instead.");
-                        PreparedStatement updateStatement = connection.prepareStatement(updateSql);
-                        // Fill in the update statement parameters, excluding the columns we don't want to update
-                        fillPreparedStatement(updateStatement, row, false);
-                        updateStatement.setString(14, segmentBarcodeId); // Set the Segment_Barcode_ID for the WHERE clause
-                        updateStatement.executeUpdate();
-                    } else {
-                        throw e; // If it's a different SQL exception, rethrow it
+                        try (PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
+                            fillPreparedStatement(insertStatement, row, true);
+                            insertStatement.executeUpdate();
+                        } catch (SQLException e) {
+                            if (e.getSQLState().equals("23505")) {
+                                System.out.println("Duplicate entry found: " + segmentBarcodeId + " - Updating this row instead.");
+                                try (PreparedStatement updateStatement = connection.prepareStatement(updateSql)) {
+                                    fillPreparedStatement(updateStatement, row, false);
+                                    updateStatement.setString(14, segmentBarcodeId);
+                                    updateStatement.executeUpdate();
+                                }
+                            } else {
+                                throw e;
+                            }
+                        }
                     }
                 }
+
+            } else if (fileName.endsWith(".csv")) {
+                // Process CSV file
+                try (
+                        Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
+                        CSVReader csvReader = new CSVReader(reader)
+                ) {
+                    String[] row;
+                    boolean isHeader = true;
+                    while ((row = csvReader.readNext()) != null) {
+                        if (isHeader) {
+                            isHeader = false;
+                            continue;
+                        }
+
+                        String segmentBarcodeId = row[0];
+
+                        try (PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
+                            fillPreparedStatement(insertStatement, row, true);
+                            insertStatement.executeUpdate();
+                        } catch (SQLException e) {
+                            if (e.getSQLState().equals("23505")) {
+                                System.out.println("Duplicate entry found: " + segmentBarcodeId + " - Updating this row instead.");
+                                try (PreparedStatement updateStatement = connection.prepareStatement(updateSql)) {
+                                    fillPreparedStatement(updateStatement, row, false);
+                                    updateStatement.setString(14, segmentBarcodeId);
+                                    updateStatement.executeUpdate();
+                                }
+                            } else {
+                                throw e;
+                            }
+                        }
+                    }
+                }
+            } else {
+                return "Unsupported file type.";
             }
 
-            workbook.close();
             return "File uploaded and data inserted/updated successfully.";
-
-        } catch (IOException | SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return "File upload failed: " + e.getMessage();
         }
     }
+
 
 
     private void fillPreparedStatement(PreparedStatement statement, Row row, boolean isInsert) throws SQLException {
@@ -274,6 +316,43 @@ public class CastingYardServiceImpl {
         }
     }
 
+    private void fillPreparedStatement(PreparedStatement statement, String[] row, boolean isInsert) throws SQLException {
+        if (isInsert) {
+            statement.setString(1, row.length > 0 ? row[0] : "");
+            statement.setString(2, row.length > 1 ? row[1] : "");
+            statement.setString(3, row.length > 2 ? row[2] : "");
+            statement.setString(4, row.length > 3 ? row[3] : "");
+            statement.setString(5, row.length > 4 ? row[4] : "");
+            statement.setString(6, row.length > 5 ? row[5] : "");
+            statement.setString(7, row.length > 6 ? row[6] : "");
+            statement.setString(8, row.length > 7 ? row[7] : "");
+            statement.setString(9, row.length > 8 ? row[8] : "");
+            statement.setString(10, row.length > 9 ? row[9] : "");
+            statement.setString(11, row.length > 10 ? row[10] : "");
+            statement.setString(12, row.length > 11 ? row[11] : "");
+            statement.setString(13, row.length > 12 ? row[12] : "");
+            statement.setString(14, row.length > 13 ? row[13] : "");
+
+            // Fixed values for insert
+            statement.setString(15, "PENDING");
+            statement.setInt(16, 0);
+            statement.setString(17, "CASTING YARD");
+        } else {
+            statement.setString(1, row.length > 1 ? row[1] : "");
+            statement.setString(2, row.length > 2 ? row[2] : "");
+            statement.setString(3, row.length > 3 ? row[3] : "");
+            statement.setString(4, row.length > 4 ? row[4] : "");
+            statement.setString(5, row.length > 5 ? row[5] : "");
+            statement.setString(6, row.length > 6 ? row[6] : "");
+            statement.setString(7, row.length > 7 ? row[7] : "");
+            statement.setString(8, row.length > 8 ? row[8] : "");
+            statement.setString(9, row.length > 9 ? row[9] : "");
+            statement.setString(10, row.length > 10 ? row[10] : "");
+            statement.setString(11, row.length > 11 ? row[11] : "");
+            statement.setString(12, row.length > 12 ? row[12] : "");
+            statement.setString(13, row.length > 13 ? row[13] : "");
+        }
+    }
 
 
     public String getNextDispatchId() {
@@ -441,43 +520,41 @@ public class CastingYardServiceImpl {
         }
     }
 
-    public List<CountInfo> getAllCounts() {
-        // Create a list to hold the count information
+    public List<CountInfo> getAllCounts(String block, String floor, String description) {
         List<CountInfo> countInfoList = new ArrayList<>();
 
-        // Define an array of count types and corresponding methods
-        String[] types = {
-                "Total Segment Count",
-                "Total Printed Count",
-                "Total Pending Count",
-                "Total QA Confirmed",
-                "Total Dispatch Count",
-                "Erection Confirm Count",
-                "Erection Completed Count",
-                "RePrinted Segment"
-        };
+        String finalFilter = buildFlexibleFilter(block, floor, description);
 
-        // Define a map of methods to retrieve counts
-        Map<String, Supplier<Integer>> countMethods = new HashMap<>();
-        countMethods.put("Total Segment Count", castingYardDetailsRepository::getCountForInventory);
-        countMethods.put("Total Printed Count", castingYardDetailsRepository::getPrintedCount);
-        countMethods.put("Total Pending Count", castingYardDetailsRepository::getPendingCount);
-        countMethods.put("Total QA Confirmed", castingYardDetailsRepository::getQAConfirmedCount);
-        countMethods.put("Total Dispatch Count", castingYardDetailsRepository::getDispatchCount);
-        countMethods.put("Erection Confirm Count", castingYardDetailsRepository::getErectionYardCount);
-        countMethods.put("Erection Completed Count", castingYardDetailsRepository::getErectionCompletedCount);
-        countMethods.put("RePrinted Segment", castingYardDetailsRepository::getReprintCount);
+        Map<String, Supplier<Integer>> countMethods = new LinkedHashMap<>();
+        countMethods.put("Total Segment Count", () -> castingYardDetailsRepository.getCountForInventoryBySegmentId(finalFilter));
+        countMethods.put("Total Printed Count", () -> castingYardDetailsRepository.getPrintedCountBySegmentId(finalFilter));
+        countMethods.put("Total Pending Count", () -> castingYardDetailsRepository.getPendingCountBySegmentId(finalFilter));
+        countMethods.put("Total QA Confirmed", () -> castingYardDetailsRepository.getQAConfirmedCountBySegmentId(finalFilter));
+        countMethods.put("Total Dispatch Count", () -> castingYardDetailsRepository.getDispatchCountBySegmentId(finalFilter));
+        countMethods.put("Erection Confirm Count", () -> castingYardDetailsRepository.getErectionYardCountBySegmentId(finalFilter));
+        countMethods.put("Erection Completed Count", () -> castingYardDetailsRepository.getErectionCompletedCountBySegmentId(finalFilter));
+        countMethods.put("RePrinted Segment", () -> castingYardDetailsRepository.getReprintCountBySegmentId(finalFilter));
 
-        // Populate the list with CountInfo objects
-        for (String type : types) {
-            CountInfo countInfo = new CountInfo();
-            countInfo.setType(type);
-            countInfo.setCount(countMethods.get(type).get()); // Use the map to get the count
-            countInfoList.add(countInfo);
-        }
+        countMethods.forEach((type, supplier) -> {
+            CountInfo info = new CountInfo();
+            info.setType(type);
+            info.setCount(supplier.get());
+            countInfoList.add(info);
+        });
 
         return countInfoList;
     }
 
+    private String buildFlexibleFilter(String block, String floor, String description) {
+        StringBuilder pattern = new StringBuilder("%");
+
+        pattern.append((block != null && !block.isBlank()) ? block : "%").append("-");
+        pattern.append((floor != null && !floor.isBlank()) ? floor : "%").append("-");
+        pattern.append((description != null && !description.isBlank()) ? description : "%");
+
+        pattern.append("%");
+
+        return pattern.toString();
+    }
 
 }

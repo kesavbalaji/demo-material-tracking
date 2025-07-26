@@ -58,7 +58,7 @@
             <input type="text" class="form-control" id="location" readonly>
         </div>
         <div class="form-group">
-            <label for="familyType">Family Type:</label>
+            <label for="familyType">Length:</label>
             <input type="text" class="form-control" id="familyType" readonly>
         </div>
         <div class="form-group">
@@ -94,7 +94,7 @@
         // Fetch the next dispatch ID on page load
         function fetchNextDispatchId() {
             $.ajax({
-                url: '/materialTracking/api/getNextDispatchId',
+                url: '/hostelOD/api/getNextDispatchId',
                 method: 'GET',
                 success: function(dispatchId) {
                     $('#dispatch').val(dispatchId);
@@ -118,14 +118,14 @@
                 e.preventDefault(); // Prevent default action
                 const barcode = $('#barcode').val();
                 $.ajax({
-                    url: '/materialTracking/api/getSegmentDataByQaConfirmation/' + barcode,
+                    url: '/hostelOD/api/getSegmentDataByQaConfirmation/' + barcode,
                     method: 'GET',
                     success: function(response) {
                         if (response.printStatus === 'QA CONFIRMED') {
                             // Populate form fields with backend data
                             $('#segmentBarcodeId').val(response.segmentBarcodeId);
                             $('#location').val(response.location);
-                            $('#familyType').val(response.familyType);
+                            $('#familyType').val(response.length);
                             $('#family').val(response.family);
 
                             // Check if the segment ID already exists in the table
@@ -177,7 +177,7 @@
 
             // Send update request to backend
             $.ajax({
-                url: '/materialTracking/api/updateDispatchId',
+                url: '/hostelOD/api/updateDispatchId',
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({

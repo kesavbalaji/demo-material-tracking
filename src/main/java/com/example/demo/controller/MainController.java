@@ -5,6 +5,7 @@ import com.example.demo.dto.*;
 import com.example.demo.entity.CastingYardData;
 import com.example.demo.entity.User;
 import com.example.demo.service.CastingYardServiceImpl;
+import com.example.demo.service.InventoryService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,9 @@ public class MainController {
 
     @Autowired
     private CastingYardServiceImpl castingYardService;
+
+    @Autowired
+    private InventoryService inventoryService;
 
 
     @PostMapping("/api/entities/upload")
@@ -229,10 +233,15 @@ public class MainController {
         return castingYardService.getCountForInventory(countDto.getCountType());
     }
 
-    @GetMapping("/api/getCounts")
-    public List<CountInfo> getAllInventoryCount() {
-        return castingYardService.getAllCounts();
+    @PostMapping("/api/getCounts")
+    public List<CountInfo> getAllInventoryCount(@RequestBody InventoryFilterRequest request) {
+        String descriptionShort = mapDescriptionToShort(request.getDescription());
+        int total = inventoryService.getTotalQty(request.getBlock(), request.getFloor(), request.getDescription()); // full form
+        List<CountInfo> allCounts = castingYardService.getAllCounts(request.getBlock(), request.getFloor(), descriptionShort); // short form
+        allCounts.forEach(e -> e.setTotalQty(total));
+        return allCounts;
     }
+
     @PostMapping("/api/getSegmentIds")
     public List<CountDto> getSegmentIdForCount(@RequestBody CountDto countDto) {
         return castingYardService.getSegmentIdForCount(countDto.getCountType());
@@ -246,5 +255,27 @@ public class MainController {
         }
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/api/totalQty")
+    public ResponseEntity<InventoryTotalQtyResponse> getTotalQty(@RequestBody InventoryFilterRequest request) {
+        int total = inventoryService.getTotalQty(request.getBlock(), request.getFloor(), request.getDescription());
+        return ResponseEntity.ok(new InventoryTotalQtyResponse(total));
+    }
+
+    private String mapDescriptionToShort(String description) {
+        if (description == null || description.isEmpty()) return "";
+
+        return switch (description.toUpperCase()) {
+            case "WALL" -> "WL";
+            case "CLADDING WALL" -> "CW";
+            case "SOLID SLAB" -> "SL";
+            case "COLUMN" -> "CL";
+            case "BEAM" -> "BM";
+            case "STAIRCASE" -> "ST";
+            case "PARAPET" -> "PW";
+            default -> description; // fallback
+        };
+    }
+
 
 }

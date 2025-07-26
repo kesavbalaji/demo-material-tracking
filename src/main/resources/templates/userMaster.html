@@ -140,7 +140,7 @@
         });
         if (users.length > 0) {
             $.ajax({
-                url: '/materialTracking/api/users',
+                url: '/hostelOD/api/users',
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(users),
@@ -160,7 +160,7 @@
     // Load users for editing
     function loadUsersForEditing() {
         $.ajax({
-            url: '/materialTracking/api/users',
+            url: '/hostelOD/api/users',
             type: 'GET',
             success: function(response) {
                 renderEditUserTable(response);
@@ -214,7 +214,7 @@
         const userId = row.data('user-id');
 
         $.ajax({
-            url: `/materialTracking/api/users/${userId}`,
+            url: `/hostelOD/api/users/${userId}`,
             type: 'PUT',
             contentType: 'application/json',
             data: JSON.stringify({ username, password, accessRights }),
@@ -234,7 +234,7 @@
         const userId = row.data('user-id');
 
         $.ajax({
-            url: `/materialTracking/api/users/${userId}`,
+            url: `/hostelOD/api/users/${userId}`,
             type: 'DELETE',
             success: function(response) {
                 alert('User deleted successfully');

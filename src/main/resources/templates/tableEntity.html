@@ -194,7 +194,7 @@
 
             if (confirm('Are you sure you want to delete this record?')) {
                 $.ajax({
-                    url: '/materialTracking/api/entities/delete', // Adjust the endpoint as necessary
+                    url: '/hostelOD/api/entities/delete', // Adjust the endpoint as necessary
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify({
@@ -222,7 +222,7 @@
             formData.append('file', fileInput.files[0]);
 
             $.ajax({
-                url: '/materialTracking/api/entities/upload',
+                url: '/hostelOD/api/entities/upload',
                 type: 'POST',
                 data: formData,
                 processData: false,
@@ -252,7 +252,7 @@
 
     function checkPrintCountAndPrint(data, row) {
         $.ajax({
-            url: '/materialTracking/api/entities/checkPrintCount', // Adjust the endpoint as necessary
+            url: '/hostelOD/api/entities/checkPrintCount', // Adjust the endpoint as necessary
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({
@@ -368,7 +368,7 @@
 
         // AJAX request to update the print status and print count
         $.ajax({
-            url: '/materialTracking/api/entities/updatePrintStatus', // Adjust the endpoint as necessary
+            url: '/hostelOD/api/entities/updatePrintStatus', // Adjust the endpoint as necessary
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({

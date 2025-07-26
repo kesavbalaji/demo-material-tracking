@@ -21,7 +21,7 @@ public class SecurityConfig {
                 .addFilterBefore(licenseCheckFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests((authorize) ->
                         authorize
-                                .requestMatchers("/materialTracking/register").permitAll()
+                                .requestMatchers("/hostelOD/register").permitAll()
                                 .anyRequest().authenticated()
                 ).formLogin(
                         form -> form

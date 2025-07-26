@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "USERS")
+@Table(name = "users_hostel")
 public class User {
 
     @Id
@@ -26,4 +26,36 @@ public class User {
 
     @Column(name = "ACCESS_RIGHTS")
     private String accessRights;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getAccessRights() {
+        return accessRights;
+    }
+
+    public void setAccessRights(String accessRights) {
+        this.accessRights = accessRights;
+    }
 }

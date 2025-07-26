@@ -92,28 +92,28 @@
     </div>
     <ul class="nav flex-column">
         <li class="nav-item">
-            <a class="nav-link ajax-link" href="/materialTracking/entities" data-url="/materialTracking/entities">BARCODE LABEL GENERATION</a>
+            <a class="nav-link ajax-link" href="/hostelOD/entities" data-url="/hostelOD/entities">BARCODE LABEL GENERATION</a>
         </li>
         <li class="nav-item" id="segmentConfirmationItem">
-            <a class="nav-link ajax-link" href="/materialTracking/segmentConfirmation" data-url="/materialTracking/segmentConfirmation">SEGMENT CONFIRMATION</a>
+            <a class="nav-link ajax-link" href="/hostelOD/segmentConfirmation" data-url="/hostelOD/segmentConfirmation">SEGMENT CONFIRMATION</a>
         </li>
         <li class="nav-item" id="dispatchConfirmationItem">
-            <a class="nav-link ajax-link" href="/materialTracking/dispatchConfirmation" data-url="/materialTracking/dispatchConfirmation">DISPATCH CONFIRMATION</a>
+            <a class="nav-link ajax-link" href="/hostelOD/dispatchConfirmation" data-url="/hostelOD/dispatchConfirmation">DISPATCH CONFIRMATION</a>
         </li>
         <li class="nav-item" id="receiveConfirmationItem">
-            <a class="nav-link ajax-link" href="/materialTracking/receiveConfirmation" data-url="/materialTracking/receiveConfirmation">RECEIVE CONFIRMATION</a>
+            <a class="nav-link ajax-link" href="/hostelOD/receiveConfirmation" data-url="/hostelOD/receiveConfirmation">RECEIVE CONFIRMATION</a>
         </li>
         <li class="nav-item" id="erectionConfirmationItem">
-            <a class="nav-link ajax-link" href="/materialTracking/erectionConfirmation" data-url="/materialTracking/erectionConfirmation">ERECTION CONFIRMATION</a>
+            <a class="nav-link ajax-link" href="/hostelOD/erectionConfirmation" data-url="/hostelOD/erectionConfirmation">ERECTION CONFIRMATION</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link ajax-link" href="/materialTracking/segmentHistoryReport" data-url="/materialTracking/segmentHistoryReport">SEGMENT HISTORY REPORT</a>
+            <a class="nav-link ajax-link" href="/hostelOD/segmentHistoryReport" data-url="/hostelOD/segmentHistoryReport">SEGMENT HISTORY REPORT</a>
         </li>
         <li class="nav-item" id="userMasterId">
-            <a class="nav-link ajax-link" href="/materialTracking/userMaster" data-url="/materialTracking/userMaster">USER MASTER</a>
+            <a class="nav-link ajax-link" href="/hostelOD/userMaster" data-url="/hostelOD/userMaster">USER MASTER</a>
         </li>
         <li class="nav-item" id="inventory">
-            <a class="nav-link ajax-link" href="/materialTracking/inventory" data-url="/materialTracking/inventory">DASHBOARD COUNT</a>
+            <a class="nav-link ajax-link" href="/hostelOD/inventory" data-url="/hostelOD/inventory">DASHBOARD COUNT</a>
         </li>
     </ul>
 </div>
@@ -139,7 +139,7 @@
         // Function to check user access rights
         function checkUserAccess() {
             $.ajax({
-                url: '/materialTracking/api/user/access', // Replace with your actual endpoint
+                url: '/hostelOD/api/user/access', // Replace with your actual endpoint
                 method: 'GET',
                 success: function(response) {
                     var accessLevel = response.accessRights; // Example: 'Admin', 'Casting', 'Erection'
@@ -238,11 +238,11 @@
             event.preventDefault(); // Prevent the default link behavior
 
             $.ajax({
-                url: '/materialTracking/api/logout', // Replace with your actual logout endpoint
+                url: '/hostelOD/api/logout', // Replace with your actual logout endpoint
                 method: 'POST',
                 success: function(response) {
                     // Redirect to the login page after successful logout
-                    window.location.href = '/materialTracking/login';
+                    window.location.href = '/hostelOD/login';
                 },
                 error: function() {
                     alert('An error occurred while logging out.');
