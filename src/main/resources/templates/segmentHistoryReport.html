@@ -81,8 +81,9 @@
             footer {
                 display: none; /* Hide the footer during print */
             }
-            #segmentId, #printDate {
+            #segmentId, #printDate, #lengthVolume  {
                 font-size: 50pt; /* Increase font size for Segment ID and Date */
+                margin: 5px 0;
             }
             @page {
                 size: auto;
@@ -408,12 +409,14 @@
 
     function printQRCode(data, description) {
         var qrCodeHTML = `
-            <div class="print-content">
-                <div id="qrCode" style="width: 100mm; height: 100mm;"></div>
-                <div id="segmentId" style="font-size: 30pt;">${data.segmentBarcodeId}</div>
-                <div id="printDate" style="font-size: 30pt;">${data.castingDate}</div>
-            </div>
-        `;
+    <div class="print-content">
+        <div id="qrCode" style="width: 100mm; height: 100mm;"></div>
+        <div id="segmentId" style="font-size: 30pt;">${data.segmentBarcodeId}</div>
+        <div id="printDate" style="font-size: 30pt;">${data.castingDate}</div>
+        <div id="lengthVolume" style="font-size: 30pt;">${data.length} × ${data.volume}</div>
+    </div>
+`;
+
 
         var printWindow = window.open('', '', 'height=600,width=800');
 

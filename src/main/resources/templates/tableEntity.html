@@ -296,94 +296,90 @@
     }
 
     function printQRCode(data) {
-        var qrCodeHTML = `
-            <div class="print-content">
-                <div id="qrCode" style="width: 100mm; height: 100mm;"></div>
-                <div id="segmentId" style="font-size: 30pt;">${data.segmentBarcodeId}</div>
-                <div id="printDate" style="font-size: 30pt;">${data.castingDate}</div>
-            </div>
-        `;
+    var qrCodeHTML = `
+    <div class="print-content">
+        <div id="qrCode" style="width: 100mm; height: 100mm;"></div>
+        <div id="segmentId" style="font-size: 30pt;">${data.segmentBarcodeId}</div>
+        <div id="printDate" style="font-size: 30pt;">${data.castingDate}</div>
+        <div id="lengthVolume" style="font-size: 30pt;">${data.length} × ${data.volume}</div>
+    </div>
+`;
+    var printWindow = window.open('', '', 'height=600,width=800');
 
-        var printWindow = window.open('', '', 'height=600,width=800');
-
-        printWindow.document.open();
-        printWindow.document.write(`
-            <html>
-            <head>
-                <style>
-                    @media print {
-                        body {
-                            margin: 0;
-                            font-family: Arial, sans-serif;
-                            text-align: center;
-                        }
-                        .print-content {
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            justify-content: center;
-                            height: 100vh; /* Full viewport height */
-                            margin: 0;
-                            padding: 0;
-                        }
-                        #qrCode {
-                            margin-bottom: 20px; /* Space between QR code and text */
-                            width: 80mm; /* Ensure QR code is 100mm */
-                            height: 80mm; /* Ensure QR code is 100mm */
-                        }
-                        #printButton {
-                            display: none; /* Hide the button during print */
-                        }
-                        footer {
-                            display: none; /* Hide the footer during print */
-                        }
-                        #segmentId, #printDate {
-                            font-size: 50pt; /* Increase font size for Segment ID and Date */
-                        }
-                        @page {
-                            size: auto;
-                            margin: 0;
-                        }
+    printWindow.document.open();
+    printWindow.document.write(`
+        <html>
+        <head>
+            <style>
+                @media print {
+                    body {
+                        margin: 0;
+                        font-family: Arial, sans-serif;
+                        text-align: center;
                     }
-                </style>
-            </head>
-            <body>
-                ${qrCodeHTML}
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
+                    .print-content {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        height: 100vh;
+                        margin: 0;
+                        padding: 0;
+                    }
+                    #qrCode {
+                        margin-bottom: 20px;
+                        width: 80mm;
+                        height: 80mm;
+                    }
+                    #printButton, footer {
+                        display: none;
+                    }
+                    #segmentId, #printDate, #lengthVolume {
+                        font-size: 50pt;
+                        margin: 5px 0;
+                    }
+                    @page {
+                        size: auto;
+                        margin: 0;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            ${qrCodeHTML}
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
 
-        // Generate the QR code for the print window
-        new QRCode(printWindow.document.getElementById("qrCode"), {
-            text: `${data.segmentBarcodeId}`,
-            width: 321, // 90mm in pixels (378 pixels for 100mm assuming 96 DPI)
-            height: 321, // 90mm in pixels (378 pixels for 100mm assuming 96 DPI)
-            colorDark : "#000000",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H // Higher error correction level
-        });
+    new QRCode(printWindow.document.getElementById("qrCode"), {
+        text: `${data.segmentBarcodeId}`,
+        width: 321,
+        height: 321,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+    });
 
-        printWindow.print();
+    printWindow.print();
 
-        // AJAX request to update the print status and print count
-        $.ajax({
-            url: '/hostelOD/api/entities/updatePrintStatus', // Adjust the endpoint as necessary
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({
-                segmentBarcodeId: data.segmentBarcodeId,
-                printStatus: 'Printed',
-                printCount: 1
-            }),
-            success: function(response) {
-                console.log('Print status updated successfully');
-            },
-            error: function(error) {
-                console.log('Failed to update print status');
-            }
-        });
-    }
+    $.ajax({
+        url: '/hostelOD/api/entities/updatePrintStatus',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            segmentBarcodeId: data.segmentBarcodeId,
+            printStatus: 'Printed',
+            printCount: 1
+        }),
+        success: function(response) {
+            console.log('Print status updated successfully');
+        },
+        error: function(error) {
+            console.log('Failed to update print status');
+        }
+    });
+}
 </script>
 </body>
 </html>
